@@ -1,0 +1,3 @@
+dots/node_modules
+dots-backend/node_modules
+dots-backend/config/jwt.js

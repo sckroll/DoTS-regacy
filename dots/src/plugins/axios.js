@@ -8,7 +8,9 @@ const BASE_URL = 'http://localhost:3000/';
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
-// axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
+axios.defaults.headers.common['Authorization'] = localStorage.getItem(
+  'userToken'
+)
 // axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
 let config = {
@@ -24,6 +26,7 @@ Vue.prototype.$http = _axios
 _axios.interceptors.request.use(
   function (config) {
     // Do something before request is sent
+    config.headers.Authorization = localStorage.getItem('userToken')
     return config
   },
   function (error) {
@@ -36,6 +39,18 @@ _axios.interceptors.request.use(
 _axios.interceptors.response.use(
   function (response) {
     // Do something with response data
+    const refreshToken = response.data
+    const originalToken = localStorage.getItem('userToken')
+
+    if (!originalToken) {
+      axios.defaults.headers.common['Authorization'] = refreshToken
+    }
+    if (refreshToken) {
+      if (typeof refreshToken === 'string') {
+        localStorage.setItem('userToken', refreshToken)
+      }
+    }
+
     return response
   },
   function (error) {

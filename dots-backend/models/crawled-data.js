@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
 
+// 개인 크롤링 데이터 스키마 정의
 const crawledDataSchema = new mongoose.Schema(
   {
-    // userid: {type: String, required: true, unique: true},
-    // username: {type: String},
+    userEmail: { type: String, required: true },
+    userName: { type: String },
     // keyword: {type: String, required: true, index: 'hashed'},
     // sub_keyword: {type: [String]},
     url: { type: String, required: true },

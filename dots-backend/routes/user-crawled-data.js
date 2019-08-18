@@ -1,6 +1,6 @@
-var express = require("express");
-var router = express.Router();
-var Data = require("../models/crawled-data");
+const express = require("express");
+const router = express.Router();
+const Data = require("../models/crawled-data");
 
 // 사용할 검색 엔진
 const SEARCH_ENG = "google";
@@ -34,6 +34,9 @@ router.post("/", function(req, res, next) {
         console.log(parsedUrl);
         // 우선 호스트 주소가 타당한지 검사
         if (hostname && parsedUrl.protocol) {
+          var userEmail = req.body.userEmail;
+          var userName = req.body.userName;
+
           if (hostname.indexOf("www." + SEARCH_ENG) != -1) {
             level = 1;
 
@@ -43,7 +46,7 @@ router.post("/", function(req, res, next) {
             }
           } else {
             pathnames = parsedUrl.pathname.match(
-              /\/([a-z0-9-%@#_.]{1,})/gi || []
+              /\/([a-z0-9-~%@#_.!]{1,})/gi || []
             );
 
             if (pathnames) {
@@ -54,13 +57,20 @@ router.post("/", function(req, res, next) {
             }
           }
 
-          var newData = new Data({
+          var newUserData = new Data({
+            userEmail,
+            userName,
             url,
             level,
             paths
           });
-          newData.save();
-          res.send(newData);
+          Data.create(newUserData)
+            .then(result => {
+              res.send(result);
+            })
+            .catch(err => {
+              res.send(err);
+            });
         } else {
           // URL 형태가 아닐 경우
           res.send({ notUrl: true });
