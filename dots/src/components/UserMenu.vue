@@ -26,33 +26,33 @@
 </template>
 
 <script>
-import jwtDecode from "jwt-decode";
+import jwtDecode from 'jwt-decode';
 
 export default {
-  data() {
+  data () {
     return {
       user: {
-        first_name: "",
-        last_name: "",
-        email: ""
+        first_name: '',
+        last_name: '',
+        email: ''
       }
-    };
+    }
   },
-  created() {
-    const token = localStorage.getItem("userToken");
-    if (!token) this.signout();
+  created () {
+    const token = localStorage.getItem('userToken')
+    if (!token) this.signout()
 
-    const decoded = jwtDecode(token);
+    const decoded = jwtDecode(token)
 
-    this.user.first_name = decoded.first_name;
-    this.user.last_name = decoded.last_name;
-    this.user.email = decoded.email;
+    this.user.first_name = decoded.first_name
+    this.user.last_name = decoded.last_name
+    this.user.email = decoded.email
   },
   methods: {
-    signout() {
-      this.$store.commit("deleteToken");
-      this.$router.push({ name: "index" });
+    signout () {
+      this.$store.commit('deleteToken')
+      this.$router.push({ name: 'index' })
     }
   }
-};
+}
 </script>
