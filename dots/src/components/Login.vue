@@ -21,27 +21,6 @@ export default {
     };
   },
   methods: {
-    /*
-    onSubmit(email, password) {
-      this.$store
-        .dispatch("LOGIN", { email, password })
-        .then(() => {
-          this.redirect();
-        })
-        .catch(({ msg }) => alert(msg));
-    },
-    redirect() {
-      const { search } = window.location;
-      const tokens = search.replace(/^\?/, "").split("&");
-      const { returnPath } = tokens.reduce((qs, tkn) => {
-        const pair = tkn.split("=");
-        qs[pair[0]] = decodeURIComponent(pair[1]);
-        return qs;
-      }, {});
-
-      this.$router.push(returnPath);
-    }
-    */
     onSubmit() {
       this.$http
         .post("/users/login", {

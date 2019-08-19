@@ -6,7 +6,6 @@ const Data = require("../models/crawled-data");
 const SEARCH_ENG = "google";
 
 router.get("/", function(req, res, next) {
-  /*
   Data.findAll()
     .then(result => {
       res.send(result);
@@ -14,7 +13,6 @@ router.get("/", function(req, res, next) {
     .catch(err => {
       throw err;
     });
-    */
 });
 
 router.post("/", function(req, res, next) {
@@ -22,6 +20,9 @@ router.post("/", function(req, res, next) {
   Data.findOneByUrl(url)
     .then(result => {
       if (!result) {
+        // selenium 실행을 위해 현재 URL, 이전 URL을 인수로 전달
+        // getCrawledData(currURL, prevURL);
+
         // 파이썬에서 크롤링한 데이터를 DB에서 불러왔다고 가정
         // 레벨 1: URL에 google이 포함되어 있는 경우
         // 레벨 2 이후: 그 외의 모든 URL, 호스트 주소 이후의 노드 개수에 따라 레벨 증가 (정규표현식 사용)
