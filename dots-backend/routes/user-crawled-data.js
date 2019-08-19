@@ -15,18 +15,28 @@ router.get("/", function(req, res, next) {
     });
 });
 
-router.post("/", function(req, res, next) {
-  var url = req.body.url;
-  Data.findOneByUrl(url)
+router.get("/delete", function(req, res, next) {
+  Data.deleteMany({})
+    .then(result => {
+      res.send(result);
+    })
+    .catch(err => {
+      throw err;
+    });
+});
+
+router.post("/add", function(req, res, next) {
+  Data.findOneByUrl(req.body.currURL)
     .then(result => {
       if (!result) {
-        // selenium 실행을 위해 현재 URL, 이전 URL을 인수로 전달
-        // getCrawledData(currURL, prevURL);
+        // selenium 실행을 위해 이전 URL, 현재 URL을 인수로 전달
+        // 인수로 전달 시 작은 따옴표로 묶어서 전달할 것
+        // getCrawledData(prevURL, currURL);
 
         // 파이썬에서 크롤링한 데이터를 DB에서 불러왔다고 가정
         // 레벨 1: URL에 google이 포함되어 있는 경우
         // 레벨 2 이후: 그 외의 모든 URL, 호스트 주소 이후의 노드 개수에 따라 레벨 증가 (정규표현식 사용)
-        var parsedUrl = require("url").parse(url);
+        var parsedUrl = require("url").parse(req.body.currURL);
         var hostname = parsedUrl.hostname;
         var paths = [hostname];
         var pathnames;
@@ -35,9 +45,6 @@ router.post("/", function(req, res, next) {
         console.log(parsedUrl);
         // 우선 호스트 주소가 타당한지 검사
         if (hostname && parsedUrl.protocol) {
-          var userEmail = req.body.userEmail;
-          var userName = req.body.userName;
-
           if (hostname.indexOf("www." + SEARCH_ENG) != -1) {
             level = 1;
 
@@ -59,9 +66,10 @@ router.post("/", function(req, res, next) {
           }
 
           var newUserData = new Data({
-            userEmail,
-            userName,
-            url,
+            user_email: req.body.userEmail,
+            user_name: req.body.userName,
+            prev_url: req.body.prevURL,
+            curr_url: req.body.currURL,
             level,
             paths
           });

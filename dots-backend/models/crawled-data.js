@@ -3,14 +3,14 @@ const mongoose = require("mongoose");
 // 개인 크롤링 데이터 스키마 정의
 const crawledDataSchema = new mongoose.Schema(
   {
-    userEmail: { type: String, required: true },
-    userName: { type: String },
+    user_email: { type: String, required: true },
+    user_name: { type: String },
     // keyword: {type: String, required: true, index: 'hashed'},
     // sub_keyword: {type: [String]},
-    url: { type: String, required: true },
+    prev_url: { type: String },
+    curr_url: { type: String, required: true },
     level: { type: Number },
     paths: { type: [String] }
-    // ref_url: {type: String}
   },
   {
     timestamps: true
