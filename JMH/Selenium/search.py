@@ -54,8 +54,8 @@ def main():
         prevUrl = prevUrl
         pageList = parsePageList()
         level = 1
-#        subkeyword = parseKoreanSubKeyword(pageContents)
-        subkeyword = parseEnglishSubKeyword(pageContents)
+        subkeyword = parseKoreanSubKeyword(pageContents)
+#        subkeyword = parseEnglishSubKeyword(pageContents)
         nowTime = datetime.now()
 
     # 만약 현재 페이지가 홈페이지인 경우(레벨 2)
@@ -67,8 +67,8 @@ def main():
         prevUrl = prevUrl
         pageList = []
         level = 2
-#        subkeyword = parseKoreanSubKeyword(pageContents)
-        subkeyword = parseEnglishSubKeyword(pageContents)
+        subkeyword = parseKoreanSubKeyword(pageContents)
+#        subkeyword = parseEnglishSubKeyword(pageContents)
         nowTime = datetime.now()
 
 
@@ -195,7 +195,7 @@ def store_mongoDB(keyword, currUrl, prevUrl, pageList, level, subkeyword, nowTim
     client = MongoClient(
         'mongodb+srv://dots_user:TzE66c5O0KB0bnjG@dots-test-x41en.mongodb.net/test?retryWrites=true&w=majority')
     db = client['example']
-    collection = db['JMH']
+    collection = db['KSC']
 
     crawl_info = {
         "키워드": keyword,

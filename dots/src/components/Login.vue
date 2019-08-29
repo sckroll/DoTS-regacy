@@ -1,6 +1,6 @@
 <template>
   <v-layout justify-center>
-    <v-flex xl3 lg3 sm10>
+    <v-flex xl3 lg3 sm6>
       <v-form>
         <v-text-field v-model="email" label="이메일" required single-line solo></v-text-field>
         <v-text-field v-model="password" label="비밀번호" required single-line solo type="password"></v-text-field>

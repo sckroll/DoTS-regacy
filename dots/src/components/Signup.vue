@@ -1,6 +1,6 @@
 <template>
   <v-layout justify-center>
-    <v-flex xl3 lg3 sm10>
+    <v-flex xl3 lg3 sm6>
       <v-form>
         <v-text-field
           v-validate="'required|email'"
@@ -65,29 +65,29 @@
 </template>
 
 <script>
-import ko from "vee-validate/dist/locale/ko.js";
+import ko from 'vee-validate/dist/locale/ko.js';
 
 export default {
   $_veeValidate: {
-    validator: "new"
+    validator: 'new'
   },
-  data() {
+  data () {
     return {
       form: {
-        email: "",
-        password: "",
-        passwordConfirm: "",
-        first_name: "",
-        last_name: ""
+        email: '',
+        password: '',
+        passwordConfirm: '',
+        first_name: '',
+        last_name: ''
       },
       dictionary: {
         messages: ko.messages,
         attributes: {
-          email: "이메일 ",
-          password: "비밀번호 ",
-          passwordConfirm: "비밀번호 확인 ",
-          first_name: "이름 ",
-          last_name: "성 "
+          email: '이메일 ',
+          password: '비밀번호 ',
+          passwordConfirm: '비밀번호 확인 ',
+          first_name: '이름 ',
+          last_name: '성 '
         }
       },
       custom: {
@@ -98,36 +98,36 @@ export default {
         }
         */
       }
-    };
+    }
   },
-  mounted() {
-    this.$validator.localize("ko", this.dictionary);
+  mounted () {
+    this.$validator.localize('ko', this.dictionary)
   },
   methods: {
-    onSubmit() {
+    onSubmit () {
       this.$validator
         .validateAll()
         .then(result => {
-          if (!result) throw new Error("모든 항목을 양식에 맞게 기입해주세요.");
-          return this.$axios.post("/users/signup", this.form);
+          if (!result) throw new Error('모든 항목을 양식에 맞게 기입해주세요.')
+          return this.$axios.post('/users/signup', this.form)
         })
         .then(result => {
-          if (!result) throw new Error("서버에서 요청을 거부했습니다.");
-          alert("회원가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
-          this.$router.push("/login");
+          if (!result) throw new Error('서버에서 요청을 거부했습니다.')
+          alert('회원가입이 완료되었습니다. 로그인 화면으로 이동합니다.')
+          this.$router.push('/login')
         })
         .catch(err => {
-          alert(err.message);
-        });
+          alert(err.message)
+        })
     },
-    onClear() {
-      this.form.email = "";
-      this.form.password = "";
-      this.form.passwordConfirm = "";
-      this.form.first_name = "";
-      this.form.last_name = "";
-      this.$validator.reset();
+    onClear () {
+      this.form.email = '';
+      this.form.password = '';
+      this.form.passwordConfirm = '';
+      this.form.first_name = '';
+      this.form.last_name = '';
+      this.$validator.reset()
     }
   }
-};
+}
 </script>

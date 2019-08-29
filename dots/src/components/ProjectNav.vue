@@ -104,10 +104,10 @@
 </template>
 
 <script>
-import PrintNode from "./PrintNode";
+import PrintNode from './PrintNode';
 
 export default {
-  name: "App",
+  name: 'App',
   props: {
     source: String
   },
@@ -115,29 +115,29 @@ export default {
     PrintNode
   },
   data: () => ({
-    drawer: null,
-    teamName: "Team01",
-    projectName: "Project01",
+    drawer: false,
+    teamName: 'Team01',
+    projectName: 'Project01',
     users: [
       {
-        name: "Haewoong Kwak",
-        position: "Leader",
-        avatar: "https://randomuser.me/api/portraits/men/81.jpg",
+        name: 'Haewoong Kwak',
+        position: 'Leader',
+        avatar: 'https://randomuser.me/api/portraits/men/81.jpg',
         isUser: false
       },
       {
-        name: "Myunghwa Ji",
-        position: "Developer",
-        avatar: "https://randomuser.me/api/portraits/men/65.jpg",
+        name: 'Myunghwa Ji',
+        position: 'Developer',
+        avatar: 'https://randomuser.me/api/portraits/men/65.jpg',
         isUser: false
       },
       {
-        name: "Seongchan Kim",
-        position: "Developer",
-        avatar: "https://randomuser.me/api/portraits/men/41.jpg",
+        name: 'Seongchan Kim',
+        position: 'Developer',
+        avatar: 'https://randomuser.me/api/portraits/men/41.jpg',
         isUser: true
       }
     ]
   })
-};
+}
 </script>

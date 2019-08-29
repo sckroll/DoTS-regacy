@@ -1,10 +1,12 @@
-'use strict';
+'use strict'
 
-import Vue from 'vue';
-import axios from 'axios';
+import Vue from 'vue'
+import axios from 'axios'
 
-const BASE_URL = 'http://localhost:3000/';
-// const BASE_URL = '/api'    // 실제 서비스 사용 시
+// const BASE_URL = 'http://localhost:3000/';
+// const BASE_URL = '' // 실제 서비스 사용 시
+const BASE_URL =
+  process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : ''
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
@@ -74,7 +76,7 @@ Plugin.install = function (Vue, options) {
       }
     }
   })
-};
+}
 
 Vue.use(Plugin)
 

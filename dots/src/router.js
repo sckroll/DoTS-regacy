@@ -1,27 +1,29 @@
-import Vue from 'vue';
-import Router from 'vue-router';
-import axios from 'axios';
+import Vue from 'vue'
+import Router from 'vue-router'
+import axios from 'axios'
 
-import IndexMenu from './components/IndexMenu.vue';
-import Index from './components/Index.vue';
-import About from './components/About.vue';
-import Features from './components/Features.vue';
-import Pricing from './components/Pricing.vue';
-import Help from './components/Help.vue';
-import LoginMenu from './components/LoginMenu.vue';
-import Login from './components/Login.vue';
-import SignupMenu from './components/SignupMenu.vue';
-import Signup from './components/Signup.vue';
-import UserMenu from './components/UserMenu.vue';
-import User from './components/User.vue';
+import IndexMenu from './components/IndexMenu.vue'
+import Index from './components/Index.vue'
+import About from './components/About.vue'
+import Features from './components/Features.vue'
+import Pricing from './components/Pricing.vue'
+import Help from './components/Help.vue'
+import LoginMenu from './components/LoginMenu.vue'
+import Login from './components/Login.vue'
+import SignupMenu from './components/SignupMenu.vue'
+import Signup from './components/Signup.vue'
+import UserMenu from './components/UserMenu.vue'
+import User from './components/User.vue'
 // import TeamMenu from './components/TeamMenu.vue';
-import ProjectNav from './components/ProjectNav.vue';
+import ProjectNav from './components/ProjectNav.vue'
 
 Vue.use(Router)
 
 // 임시
+// const apiRootPath =
+//   process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : '/api'
 const apiRootPath =
-  process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : '/api/';
+  process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : ''
 
 // 토큰의 유효성을 검사하기 위해 토큰을 헤더에 담아 서버로 전달
 const pageCheck = (to, from, next) => {
@@ -47,7 +49,7 @@ const pageCheck = (to, from, next) => {
     .catch(err => {
       throw err
     })
-};
+}
 
 export default new Router({
   mode: 'history',
