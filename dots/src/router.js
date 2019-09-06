@@ -14,7 +14,7 @@ import SignupMenu from './components/SignupMenu.vue'
 import Signup from './components/Signup.vue'
 import UserMenu from './components/UserMenu.vue'
 import User from './components/User.vue'
-// import TeamMenu from './components/TeamMenu.vue';
+import CreateProject from './components/CreateProject.vue'
 import ProjectNav from './components/ProjectNav.vue'
 
 Vue.use(Router)
@@ -95,6 +95,10 @@ export default new Router({
       // 로그인 페이지
       path: '/login',
       component: LoginMenu,
+      beforeEnter: (to, from, next) => {
+        if (localStorage.getItem('userToken')) return next('/p')
+        next()
+      },
       children: [
         {
           path: '',
@@ -107,6 +111,10 @@ export default new Router({
       // 회원가입 페이지
       path: '/signup',
       component: SignupMenu,
+      beforeEnter: (to, from, next) => {
+        if (localStorage.getItem('userToken')) return next('/p')
+        next()
+      },
       children: [
         {
           path: '',
@@ -117,9 +125,8 @@ export default new Router({
     },
     {
       // 프로젝트
-      // '': 프로젝트 메인 메뉴
-      // '/:projectid': 해당 id를 가진 프로젝트
-      path: '/project',
+      // '/:id': 해당 id를 가진 프로젝트
+      path: '/project/:id',
       name: 'project',
       component: ProjectNav,
       beforeEnter: pageCheck
@@ -134,9 +141,14 @@ export default new Router({
           path: '',
           name: 'user',
           component: User
+        },
+        {
+          path: '/p/create-project',
+          name: 'create-project',
+          component: CreateProject
         }
       ]
-    } /*    {      // 팀 관리 메뉴      path: '/:teamid',      name: 'team',      component: TeamMenu    }, */,
+    },
     {
       // 그 외의 경로로 접근할 경우 루트로 리다이렉트
       path: '/*',

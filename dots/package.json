@@ -9,6 +9,7 @@
 	},
 	"dependencies": {
 		"core-js": "^2.6.5",
+		"randomcolor": "^0.5.4",
 		"vue": "^2.6.10",
 		"vue-d3-network": "^0.1.28",
 		"vue-router": "^3.0.3",

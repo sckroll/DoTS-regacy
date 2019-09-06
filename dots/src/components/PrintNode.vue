@@ -1,47 +1,29 @@
 <template>
   <v-flex>
-    <v-text-field
-      @keyup.enter="submit"
-      v-model="urlTextField"
-      label="URL을 입력하세요"
-      single-line
-      solo
-      clearable
-    ></v-text-field>
-    <v-btn color="blue darken-4 white--text" @click="onSubmit">크롤링 시작</v-btn>
-    <v-btn color="warning" @click="truncate">초기화</v-btn>
-    <br />
-    <br />
-    <div v-if="isValueRequested">
-      <span class="headline font-weight-light">다음의 URL로 접속합니다.</span>
-      <br />
-      <span class="headline font-weight-medium">{{ decodeURI(currURL) }}</span>
+    <v-container>
+      <v-row class="mt-5">
+        <v-col cols="10" class="pa-0">
+          <v-text-field
+            @keyup.enter="submit"
+            v-model="urlTextField"
+            label="URL을 입력하면 임시 크롤링 정보와 시각화 정보가 출력됩니다."
+            single-line
+            solo
+            clearable
+          ></v-text-field>
+        </v-col>
+        <v-col cols="1" class="pa-0">
+          <v-btn color="blue darken-4 white--text" height="48" tile @click="onSubmit">
+            크롤링
+            <br />시작
+          </v-btn>
+        </v-col>
+        <v-col cols="1" class="pa-0">
+          <v-btn color="warning" height="48" tile @click="truncate">초기화</v-btn>
+        </v-col>
+      </v-row>
+    </v-container>
 
-      <br />
-      <br />
-      <div v-if="isDataLoaded">
-        <div>
-          <span class="headline font-weight-light">URL 노드 레벨:&nbsp;</span>
-          <span class="headline font-weight-medium">{{ crawledData.level }}</span>
-        </div>
-        <div>
-          <span class="headline font-weight-light">Paths:&nbsp;</span>
-          <span class="headline font-weight-medium">{{ crawledData.paths }}</span>
-        </div>
-      </div>
-      <div v-else>
-        <span class="headline font-weight-light">올바른 URL 형식이 아닙니다.</span>
-        <br />
-        <span class="headline font-weight-medium">{ 프로토콜 }://{ 호스트 주소 }/{ 경로 }&nbsp;</span>
-        <span class="headline font-weight-light">순으로 입력해주세요.</span>
-      </div>
-    </div>
-    <div v-else>
-      <span class="headline font-weight-medium">테스트용 페이지입니다.</span>
-      <br />
-      <span class="headline font-weight-light">URL을 입력하면 임시 크롤링 정보와 시각화 정보가 출력됩니다.</span>
-    </div>
-    <br />
     <v-layout justify-center class="d3-canvas">
       <d3-network
         :net-nodes="nodes"
@@ -53,13 +35,20 @@
     </v-layout>
     <div class="popup">
       <v-bottom-sheet v-model="sheet" inset>
-        <v-sheet class="text-center" height="200px">
-          <div class="py-3">
-            <div class="node-name display-1">{{ pinnedNode.name }}</div>
-            <div class="node-info headline">
-              <span class="node-level font-weight-light px-10">노드 레벨: {{ pinnedNode.level }}</span>
-              <span class="node-id font-weight-light px-10">노드 ID: {{ pinnedNode.id }}</span>
-            </div>
+        <v-sheet class="pa-6" tile color="blue darken-4">
+          <div class="display-1 white--text">{{ pinnedNode.name.host }}</div>
+          <div class="headline grey--text text--lighten-1">{{ pinnedNode.name.rest }}</div>
+        </v-sheet>
+        <v-sheet class="pa-6" tile color="blue darken-3">
+          <div class="title-1 font-weight-light grey--text text--lighten-2">{{ pinnedNode.url }}</div>
+        </v-sheet>
+        <v-sheet class="pa-6" height="200px" tile>
+          <div class="headline">
+            <span class="font-weight-light">노드 ID:</span>
+            <span class="font-weight-medium ml-2">{{ pinnedNode.id }}</span>
+            <br />
+            <span class="font-weight-light">노드 레벨:</span>
+            <span class="font-weight-medium ml-2">{{ pinnedNode.level }}</span>
           </div>
         </v-sheet>
       </v-bottom-sheet>
@@ -81,32 +70,45 @@ export default {
     D3Network
     // NodeDetailSheet
   },
+  props: {
+    project: {
+      type: Object
+    }
+  },
   data () {
     return {
       prevURL: '',
       currURL: '',
       prevQuery: '',
       urlTextField: '',
-      isValueRequested: false,
-      isDataLoaded: false,
       sheet: false,
       totalData: [],
       crawledData: {},
-      mainTopic: 'Main Topic',
+      mainTopic: this.project.topic,
       nodes: [],
       links: [],
       nodeSize: 30,
       fontSize: 20,
       linkWidth: 5,
       canvasWidth: window.innerWidth,
-      canvasHeight: window.innerHeight,
+      canvasHeight: window.innerHeight - 200,
       nodeIndex: 0,
       pinnedNode: {
         id: 0,
-        name: '',
+        name: {
+          host: '',
+          rest: []
+        },
         level: 0,
-        path: [],
-        url: ''
+        paths: [],
+        url: '',
+        keyword: {
+          main: '',
+          sub: []
+        },
+        foundUser: [],
+        memo: '',
+        marked: []
       }
     }
   },
@@ -114,12 +116,6 @@ export default {
     options () {
       return {
         force: 4000,
-        // forces: {
-        //   X: 0.5,
-        //   Y: 0.5,
-        //   ManyBody: true,
-        //   Center: true
-        // },
         size: { w: 800, h: 800 },
         nodeSize: this.nodeSize,
         fontSize: this.fontSize,
@@ -147,7 +143,7 @@ export default {
     this.addZeroNode()
 
     this.$http
-      .get('/data')
+      .get('/data', { params: { name: this.project.project_name } })
       .then(result => {
         this.totalData = result.data
         if (this.totalData.length > 0) {
@@ -175,10 +171,29 @@ export default {
       }
 
       if (value !== '') {
-        this.currURL = value
-        this.isValueRequested = true
-
         const decoded = jwtDecode(localStorage.getItem('userToken'))
+        this.currURL = value
+
+        // prevURL을 이용하여 부모 노드를 검색
+        // (추후에 크롬 API 연동 과정에서 document.referrer로 대체)
+        var parentNode = this.nodes.find(node => {
+          if (this.prevURL === '') {
+            return node.name.split(' ')[1] === 'etc.';
+          } else {
+            return node.url === this.prevURL
+          }
+        })
+        console.log(parentNode)
+        var parentId = parentNode
+          ? parentNode.id
+          : this.prevURL === ''
+            ? this.nodeIndex
+            : 0
+        var parentLevel = parentNode
+          ? parentNode.level
+          : this.prevURL === ''
+            ? 1
+            : 0
 
         // axios를 이용, 서버에 값 요청
         this.$http
@@ -186,14 +201,25 @@ export default {
             userEmail: decoded.email,
             userName: decoded.first_name + ' ' + decoded.last_name,
             prevURL: this.prevURL,
-            currURL: this.currURL
+            currURL: this.currURL,
+            parentId,
+            parentLevel
           })
           .then(response => {
             if (response.data.notUrl) {
-              this.isDataLoaded = false
+              if (response.data.isMainPage) {
+                // Google 메인 페이지인 경우 (DB에 저장되지 않음)
+                this.crawledData.level = response.data.level
+                this.crawledData.paths = response.data.paths
+
+                this.prevURL = '';
+              } else {
+                // 올바른 URL이 아닌 경우
+                alert('올바른 URL이 아닙니다.')
+                this.urlTextField = '';
+              }
             } else {
               this.crawledData = response.data
-              this.isDataLoaded = true
 
               // 불러온 데이터로부터 노드 생성 및 추가
               this.addNodesfromCrawledData(this.crawledData)
@@ -201,25 +227,26 @@ export default {
               this.prevURL = this.currURL
             }
           })
+          .catch(err => {
+            throw err
+          })
       } else {
         this.currURL = '';
-        this.isValueRequested = false
       }
     },
     onSubmit () {
-      this.submit(this.urlTextField)
+      var val = this.urlTextField ? this.urlTextField : '';
+      this.submit(val)
     },
     // 모든 노드 삭제
     truncate () {
       if (confirm('모든 노드를 삭제하시겠습니까?')) {
         this.$http
-          .get('/data/delete')
+          .delete('/data')
           .then(result => {
             this.nodes = []
             this.links = []
             this.nodeIndex = 0
-            this.isValueRequested = false
-            this.isDataLoaded = false
             this.urlTextField = '';
             this.prevURL = '';
             this.prevQuery = '';
@@ -249,12 +276,10 @@ export default {
         if (data.paths.length > 1) {
           nodeLevel1 = data.paths[1]
           this.prevQuery = nodeLevel1
+          this.addInitialNodesAndLinks(nodeLevel1, data.curr_url)
         } else {
-          nodeLevel1 = SEARCH_ENG
           this.prevQuery = '';
         }
-
-        this.addInitialNodesAndLinks(nodeLevel1)
       } else {
         // 현재는 레벨 1 노드 접속 후 다른 웹사이트 접속 시 etc. 노드에 연결되지 않음
         // 추후에 검색 결과 페이지 내 prevURL과 일치하는 URL 링크가 있을 경우에만
@@ -277,11 +302,10 @@ export default {
         }
 
         // 레벨 1 노드 및 간선 추가
-        // sourceId: 레벨 2 이후의 노드가 생성될 기반 노드
-        var sourceId = this.addInitialNodesAndLinks(nodeLevel1)
+        this.addInitialNodesAndLinks(nodeLevel1, data.curr_url)
 
         // 레벨 2 이상일 경우 노드 및 간선 추가
-        this.addNodesAndLinks(data, sourceId)
+        this.addNodesAndLinks(data)
       }
     },
     // 레벨 0 노드 추가
@@ -297,16 +321,14 @@ export default {
       this.nodes[0].pinned = true
     },
     // 레벨 1 노드 및 간선 추가
-    addInitialNodesAndLinks (label) {
+    addInitialNodesAndLinks (label, url) {
       var isPushed = false // 노드 중복 여부
-      var sourceId = 0 // 레벨 2 이후 노드가 생성될 기반 노드
 
       // 이미 존재하는 노드인지 검사
       this.nodes.forEach((item, index) => {
         if (item.level === 1) {
           if (item.name === `[1] ${label}`) {
             isPushed = true
-            sourceId = item.id
           }
         }
       })
@@ -317,7 +339,8 @@ export default {
           id: this.nodeIndex++,
           name: `[1] ${label}`,
           _color: 'cyan',
-          level: 1
+          level: 1,
+          url: label === 'etc.' ? label : url
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -332,63 +355,53 @@ export default {
           _svgAttrs: { 'stroke-width': 10, opacity: 1 }
         })
         console.log('Link created : 0 -> ' + (this.nodeIndex - 1))
-
-        sourceId = this.nodeIndex - 1
       }
-
-      return sourceId
     },
     // 레벨 2 이후의 노드 및 간선 추가
-    addNodesAndLinks (data, sourceId) {
-      var prevNodeId = sourceId
+    addNodesAndLinks (data) {
+      var joinedURL = data.paths.join('')
+      var duplicatedLinkTid = -1
 
-      data.paths.forEach((item, index) => {
-        var duplicatedLinkTid = -1
-
-        // 각 노드들과 비교하여 중복되는 이름의 노드가 존재하는지 검사
-        var duplicatedNode = this.nodes.find(node => {
-          return node.name.split(' ')[1] === item
-        })
-
-        // 중복된 노드가 있는 경우 간선까지 중복되는지 검사
-        if (duplicatedNode) {
-          var link = this.links.find(x => {
-            return x.tid === duplicatedNode.id
-          })
-          if (link.sid === prevNodeId) {
-            duplicatedLinkTid = link.tid
-          }
-        }
-
-        if (duplicatedLinkTid === -1) {
-          // 간선은 중복되지 않은 경우
-          // 노드 생성
-          this.nodes.push({
-            id: this.nodeIndex++,
-            name: `[${index + 2}] ${decodeURI(item)}`,
-            level: index + 2
-          })
-          console.log(
-            'Node created (idx, lv, name): ' +
-              (this.nodeIndex - 1) +
-              ', ' +
-              (index + 2) +
-              ', ' +
-              decodeURI(item)
-          )
-
-          // 간선 연결
-          var sid = prevNodeId
-          var tid = this.nodeIndex - 1
-          this.links.push({ sid, tid })
-          console.log('Link created : ' + sid + ' -> ' + tid)
-
-          prevNodeId = tid
-        } else {
-          // 간선도 중복되는 경우
-          prevNodeId = duplicatedLinkTid
-        }
+      // 각 노드들과 비교하여 중복되는 이름의 노드가 존재하는지 검사
+      var duplicatedNode = this.nodes.find(node => {
+        return node.name.split(' ')[1] === joinedURL
       })
+
+      // 중복된 노드가 있는 경우 간선까지 중복되는지 검사
+      if (duplicatedNode) {
+        var link = this.links.find(x => {
+          return x.tid === duplicatedNode.id
+        })
+        if (link.sid === data.parent_id) {
+          duplicatedLinkTid = link.tid
+        }
+      }
+
+      if (duplicatedLinkTid === -1) {
+        // 간선은 중복되지 않은 경우
+        // 노드 생성
+        this.nodes.push({
+          id: this.nodeIndex++,
+          name: `[${data.level}] ${decodeURI(joinedURL)}`,
+          level: data.level,
+          url: data.curr_url,
+          paths: data.paths
+        })
+        console.log(
+          'Node created (idx, lv, name): ' +
+            (this.nodeIndex - 1) +
+            ', ' +
+            data.level +
+            ', ' +
+            decodeURI(joinedURL)
+        )
+
+        // 간선 연결
+        var sid = data.parent_id
+        var tid = this.nodeIndex - 1
+        this.links.push({ sid, tid })
+        console.log('Link created : ' + sid + ' -> ' + tid)
+      }
     },
     // 노드 클릭 시 이벤트
     nodeClick (event, node) {
@@ -407,10 +420,19 @@ export default {
     // 선택된 노드에 대한 정보를 객체에 저장
     savePinnedNode (node) {
       this.pinnedNode.id = node.id
-      this.pinnedNode.name = node.name.split(' ')[1]
       this.pinnedNode.level = node.level
-      this.pinnedNode.path = []
-      this.pinnedNode.url = '';
+      this.pinnedNode.paths = node.paths
+      this.pinnedNode.url =
+        node.url !== 'etc.'
+          ? decodeURI(node.url)
+          : 'Google 검색 결과 페이지를 거치지 않고 접속한 페이지들이 하위 노드로 생성됩니다.';
+      this.pinnedNode.name = {
+        host:
+          node.level > 1
+            ? decodeURI(node.paths[0])
+            : node.name.slice(node.name.indexOf(' ') + 1),
+        rest: node.level > 1 ? decodeURI(node.paths.slice(1).join('')) : ''
+      }
     }
   }
 }

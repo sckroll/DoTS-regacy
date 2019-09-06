@@ -16,6 +16,7 @@ var history = require('connect-history-api-fallback')
 
 var indexRouter = require('./routes/index')
 var usersRouter = require('./routes/users')
+var projectsRouter = require('./routes/projects')
 // var moviesRouter = require("./routes/movies");
 var crawledDataRouter = require('./routes/user-crawled-data')
 var apiRouter = require('./routes/api/index')
@@ -42,14 +43,14 @@ app.use(cors(corsOptions))
 
 app.use('/', indexRouter)
 app.use('/users', usersRouter)
+app.use('/projects', projectsRouter)
 app.use('/api', apiRouter)
 // app.use("/api/movies", moviesRouter);
 app.use('/data', crawledDataRouter)
 
 // connect MongoDB
-var db_name = 'test'
 mongoose.connect(
-	`mongodb+srv://dots_user:TzE66c5O0KB0bnjG@dots-test-x41en.mongodb.net/${db_name}?retryWrites=true&w=majority`,
+	'mongodb+srv://dots_user:TzE66c5O0KB0bnjG@dots-test-x41en.mongodb.net/test?retryWrites=true&w=majority',
 	{
 		useCreateIndex: true,
 		useNewUrlParser: true
@@ -58,7 +59,7 @@ mongoose.connect(
 var db = mongoose.connection
 db.on('error', console.error.bind(console, 'connetion error'))
 db.once('open', function() {
-	console.log('mongoose connected')
+	console.log('Mongoose connected')
 })
 
 // catch 404 and forward to error handler

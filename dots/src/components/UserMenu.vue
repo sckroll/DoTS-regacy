@@ -3,15 +3,26 @@
     <v-app-bar app color="blue darken-4" dark>
       <v-toolbar-title class="headline">
         <span class="font-weight-medium">DoTS</span>
-        <!-- <span class="font-weight-light"></span> -->
+        <!-- <span class="font-weight-light ml-4">Main menu</span> -->
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <!-- <v-toolbar-title class="headline">
-        <span class="font-weight-light">{{ user.first_name }}님 환영합니다!</span>
-      </v-toolbar-title>-->
-      <v-toolbar-items>
-        <v-btn color="blue accent-1" text @click="signout">로그아웃</v-btn>
-      </v-toolbar-items>
+      <v-menu offset-y>
+        <template v-slot:activator="{ on }">
+          <v-avatar :color="user.color" v-on="on" style="cursor: pointer;" v-ripple>
+            <span>{{ user.lastName.charAt(0) }}</span>
+          </v-avatar>
+        </template>
+        <v-list>
+          <v-list-item
+            v-for="(item, index) in items"
+            :key="index"
+            :disabled="item.disabled"
+            @click="item.action"
+          >
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </v-app-bar>
 
     <v-content>
@@ -32,10 +43,23 @@ export default {
   data () {
     return {
       user: {
-        first_name: '',
-        last_name: '',
-        email: ''
-      }
+        firstName: '',
+        lastName: '',
+        email: '',
+        color: ''
+      },
+      items: [
+        {
+          title: '계정 관리',
+          action: '',
+          disabled: true
+        },
+        {
+          title: '로그아웃',
+          action: this.signout,
+          disabled: false
+        }
+      ]
     }
   },
   created () {
@@ -44,9 +68,10 @@ export default {
 
     const decoded = jwtDecode(token)
 
-    this.user.first_name = decoded.first_name
-    this.user.last_name = decoded.last_name
+    this.user.firstName = decoded.first_name
+    this.user.lastName = decoded.last_name
     this.user.email = decoded.email
+    this.user.color = decoded.color
   },
   methods: {
     signout () {

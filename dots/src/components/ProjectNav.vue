@@ -4,7 +4,7 @@
       <v-list>
         <v-list-item>
           <v-list-item-content>
-            <v-list-item-title class="headline">{{ teamName }}</v-list-item-title>
+            <v-list-item-title class="headline">{{ project.team_name }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
 
@@ -83,20 +83,18 @@
     <v-app-bar app color="blue darken-4" dark>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title class="headline">
-        <span class="font-weight-medium">{{ projectName }}</span>
-        <!-- <span class="font-weight-light"></span> -->
+        <span class="font-weight-medium">{{ project.project_name }}</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-toolbar-title class="headline">
-        <span class="font-weight-light">{{ teamName }}</span>
+        <span class="font-weight-light">{{ project.team_name }}</span>
       </v-toolbar-title>
     </v-app-bar>
 
     <v-content>
-      <br />
       <v-layout justify-center>
         <v-flex xl8 lg8 sm10>
-          <print-node></print-node>
+          <print-node v-if="isLoaded" :project="project"></print-node>
         </v-flex>
       </v-layout>
     </v-content>
@@ -108,16 +106,12 @@ import PrintNode from './PrintNode';
 
 export default {
   name: 'App',
-  props: {
-    source: String
-  },
   components: {
     PrintNode
   },
   data: () => ({
     drawer: false,
-    teamName: 'Team01',
-    projectName: 'Project01',
+    isLoaded: false,
     users: [
       {
         name: 'Haewoong Kwak',
@@ -137,7 +131,23 @@ export default {
         avatar: 'https://randomuser.me/api/portraits/men/41.jpg',
         isUser: true
       }
-    ]
-  })
+    ],
+    project: {}
+  }),
+  created () {
+    this.$http
+      .get('/projects/current', {
+        params: {
+          id: this.$route.params.id
+        }
+      })
+      .then(result => {
+        this.project = result.data
+        this.isLoaded = true
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
 }
 </script>
