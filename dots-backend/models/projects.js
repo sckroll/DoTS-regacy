@@ -17,7 +17,7 @@ const ProjectsSchema = new mongoose.Schema(
 		team_name: { type: String, required: true },
 		founder_email: { type: String, required: true, lowercase: true },
 		// member: [MembersSchema]
-		member: [
+		members: [
 			{
 				email: { type: String, required: true, lowercase: true },
 				first_name: { type: String },
@@ -54,7 +54,7 @@ ProjectsSchema.statics.findAll = function() {
 
 // Find all by member email
 ProjectsSchema.statics.findByMember = function(email) {
-	return this.find({ 'member.email': email })
+	return this.find({ 'members.email': email })
 }
 
 // Find one by project ID

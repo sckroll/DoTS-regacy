@@ -68,19 +68,29 @@ router.post('/add', function(req, res, next) {
 	if (isCrawlable) {
 		// 이 부분에서 파이썬(Selenium) 연동
 
-		// selenium 실행을 위해 현재 URL, 이전 URL, 레벨을 인수로 전달
-		// 인수로 전달 시 작은 따옴표로 묶어서 전달할 것
-		// getCrawledData(currURL, prevURL, level);
+		// selenium 실행을 위해 JSON으로 묶어서 인수로 전달
+		// const newUserData = {
+		// 	user_email: req.body.userEmail,
+		// 	user_name: req.body.userName,
+		// 	keyword: '',
+		// 	sub_keyword: [],
+		// 	marked: [],
+		// 	prev_url: req.body.prevURL,
+		// 	curr_url: req.body.currURL,
+		// 	level,
+		// 	parent_id: parentId,
+		// 	paths
+		// }
 
 		// var pythonShell = require('python-shell');
 		// var file = '../../JMH/Selenium/search.py';
 		// var options = {
-		// 	mode: 'text',
+		// 	mode: 'json',
 		// 	pythonPath: 'python',
 		// 	pythonOptions: ['-u'],
 		// 	scriptPath: '',
 		// 	encoding: 'utf8',
-		// 	args: [currURL, prevURL, level]
+		// 	args: [newUserData]
 		// };
 
 		// pythonShell.PythonShell.run(file, options, function(err, result) {
@@ -96,6 +106,9 @@ router.post('/add', function(req, res, next) {
 					var newUserData = new Data({
 						user_email: req.body.userEmail,
 						user_name: req.body.userName,
+						keyword: 'mainKeyword',
+						sub_keyword: ['subKeyword1', 'subKeyword2'],
+						marked: [],
 						prev_url: req.body.prevURL,
 						curr_url: req.body.currURL,
 						level,

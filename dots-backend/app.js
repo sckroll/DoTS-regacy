@@ -14,6 +14,8 @@ var cors = require('cors')
 var mongoose = require('mongoose')
 var history = require('connect-history-api-fallback')
 
+var db = require('./config/database')
+
 var indexRouter = require('./routes/index')
 var usersRouter = require('./routes/users')
 var projectsRouter = require('./routes/projects')
@@ -49,13 +51,8 @@ app.use('/api', apiRouter)
 app.use('/data', crawledDataRouter)
 
 // connect MongoDB
-mongoose.connect(
-	'mongodb+srv://dots_user:TzE66c5O0KB0bnjG@dots-test-x41en.mongodb.net/test?retryWrites=true&w=majority',
-	{
-		useCreateIndex: true,
-		useNewUrlParser: true
-	}
-)
+mongoose.connect(db.uri, db.options)
+
 var db = mongoose.connection
 db.on('error', console.error.bind(console, 'connetion error'))
 db.once('open', function() {

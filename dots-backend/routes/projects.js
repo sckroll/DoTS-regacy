@@ -64,7 +64,7 @@ router.post('/create', function(req, res, next) {
 					topic: req.body.topic,
 					team_name: req.body.teamName,
 					founder_email: req.body.user.email,
-					member: []
+					members: []
 				})
 
 				const newMember = {
@@ -75,7 +75,7 @@ router.post('/create', function(req, res, next) {
 					color: req.body.user.color
 				}
 
-				newProject.member.push(newMember)
+				newProject.members.push(newMember)
 
 				Project.create(newProject)
 					.then(r => {
@@ -94,7 +94,7 @@ router.post('/create', function(req, res, next) {
 				// 			position: '팀장'
 				// 		}
 
-				// 		newProject.member.push(newMember)
+				// 		newProject.members.push(newMember)
 
 				// 		Project.create(newProject)
 				// 			.then(r => {

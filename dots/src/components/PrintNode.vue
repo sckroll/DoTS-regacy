@@ -42,13 +42,46 @@
         <v-sheet class="pa-6" tile color="blue darken-3">
           <div class="title-1 font-weight-light grey--text text--lighten-2">{{ pinnedNode.url }}</div>
         </v-sheet>
+        <v-sheet class="pa-6" tile color="blue lighten-2">
+          <v-row no-gutters>
+            <v-col cols="2">
+              <v-sheet tile color="blue lighten-2" class="headline">
+                <span class="font-weight-light">노드 ID:</span>
+                <span class="font-weight-medium ml-2">{{ pinnedNode.id }}</span>
+              </v-sheet>
+            </v-col>
+            <v-col cols="3">
+              <v-sheet tile color="blue lighten-2" class="headline">
+                <span class="font-weight-light">노드 레벨:</span>
+                <span class="font-weight-medium ml-2">{{ pinnedNode.level }}</span>
+              </v-sheet>
+            </v-col>
+            <v-col cols="7" v-if="pinnedNode.foundUser !== ''">
+              <v-sheet tile color="blue lighten-2" class="headline">
+                <span class="font-weight-light">이 URL을 방문한 팀원:</span>
+                <span
+                  v-for="member in project.members"
+                  :key="member.email"
+                  class="font-weight-medium ml-2"
+                >
+                  <span v-for="(user, index) in pinnedNode.foundUser" :key="index" class="mx-2">
+                    <v-avatar v-if="member.email === user" :color="member.color" size="32">
+                      <span class="white--text subtitle-2">{{ member.last_name.charAt(0) }}</span>
+                    </v-avatar>
+                  </span>
+                </span>
+              </v-sheet>
+            </v-col>
+          </v-row>
+        </v-sheet>
         <v-sheet class="pa-6" height="200px" tile>
           <div class="headline">
-            <span class="font-weight-light">노드 ID:</span>
-            <span class="font-weight-medium ml-2">{{ pinnedNode.id }}</span>
-            <br />
-            <span class="font-weight-light">노드 레벨:</span>
-            <span class="font-weight-medium ml-2">{{ pinnedNode.level }}</span>
+            <span class="font-weight-bold">{{ pinnedNode.keyword.main }}</span>
+            <span
+              v-for="(subKeyword, index) in pinnedNode.keyword.sub"
+              :key="index"
+              class="font-weight-light"
+            >, {{ subKeyword }}</span>
           </div>
         </v-sheet>
       </v-bottom-sheet>
@@ -84,7 +117,6 @@ export default {
       sheet: false,
       totalData: [],
       crawledData: {},
-      mainTopic: this.project.topic,
       nodes: [],
       links: [],
       nodeSize: 30,
@@ -107,8 +139,8 @@ export default {
           sub: []
         },
         foundUser: [],
-        memo: '',
-        marked: []
+        marked: [],
+        memo: ''
       }
     }
   },
@@ -139,8 +171,9 @@ export default {
     }
   },
   created () {
-    // 레벨 0 노드 초기화
+    // 루트 노드, etc. 노드 초기화
     this.addZeroNode()
+    this.addInitialNodesAndLinks('', 'etc.')
 
     this.$http
       .get('/data', { params: { name: this.project.project_name } })
@@ -251,7 +284,9 @@ export default {
             this.prevURL = '';
             this.prevQuery = '';
 
+            // 루트 노드, etc. 노드 재생성
             this.addZeroNode()
+            this.addInitialNodesAndLinks('', 'etc.')
 
             alert('모든 노드를 삭제했습니다.')
           })
@@ -276,7 +311,7 @@ export default {
         if (data.paths.length > 1) {
           nodeLevel1 = data.paths[1]
           this.prevQuery = nodeLevel1
-          this.addInitialNodesAndLinks(nodeLevel1, data.curr_url)
+          this.addInitialNodesAndLinks(data, nodeLevel1)
         } else {
           this.prevQuery = '';
         }
@@ -284,25 +319,19 @@ export default {
         // 현재는 레벨 1 노드 접속 후 다른 웹사이트 접속 시 etc. 노드에 연결되지 않음
         // 추후에 검색 결과 페이지 내 prevURL과 일치하는 URL 링크가 있을 경우에만
         // 아래 코드를 실행하도록 작성
+
         if (this.prevURL.indexOf('www.' + SEARCH_ENG) !== -1) {
-          // if (this.prevQuery) {
-          console.log('레벨 1 노드로부터 이동')
+          // 이전 URL이 검색 결과 페이지일 경우
           nodeLevel1 = this.prevQuery
-          // }
         } else {
+          // 이전 URL이 없거나 일반 홈페이지일 경우
           // etc. 처리
           this.prevQuery = '';
           nodeLevel1 = 'etc.';
-          // if (this.prevQuery) {
-          //   nodeLevel1 = this.prevQuery
-          // } else {
-          //   this.prevQuery = '';
-          //   nodeLevel1 = 'etc.';
-          // }
         }
 
         // 레벨 1 노드 및 간선 추가
-        this.addInitialNodesAndLinks(nodeLevel1, data.curr_url)
+        this.addInitialNodesAndLinks(data, nodeLevel1)
 
         // 레벨 2 이상일 경우 노드 및 간선 추가
         this.addNodesAndLinks(data)
@@ -312,7 +341,7 @@ export default {
     addZeroNode () {
       this.nodes.push({
         id: this.nodeIndex++,
-        name: this.mainTopic,
+        name: this.project.topic,
         _color: 'blue',
         level: 0,
         fx: this.canvasWidth / 2,
@@ -321,7 +350,7 @@ export default {
       this.nodes[0].pinned = true
     },
     // 레벨 1 노드 및 간선 추가
-    addInitialNodesAndLinks (label, url) {
+    addInitialNodesAndLinks (data, label) {
       var isPushed = false // 노드 중복 여부
 
       // 이미 존재하는 노드인지 검사
@@ -340,7 +369,11 @@ export default {
           name: `[1] ${label}`,
           _color: 'cyan',
           level: 1,
-          url: label === 'etc.' ? label : url
+          url: label !== 'etc.' ? data.curr_url : label,
+          keyword: label !== 'etc.' ? data.keyword : '',
+          subKeyword: label !== 'etc.' ? data.sub_keyword : '',
+          foundUser: label !== 'etc.' ? [data.user_email] : '',
+          marked: label !== 'etc.' ? data.marked : ''
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -379,13 +412,50 @@ export default {
 
       if (duplicatedLinkTid === -1) {
         // 간선은 중복되지 않은 경우
+
+        // 노드 이름 작명 함수
+        var nodeNameConvention = (paths, url) => {
+          var decodedURL = decodeURI(url)
+          var decodedPaths = []
+          var nodeName = []
+
+          // paths 배열 URL 요소 디코딩
+          for (var path of paths) {
+            decodedPaths.push(decodeURI(path))
+          }
+
+          // URL 길이가 50자가 넘는지 검사
+          if (decodedURL.length > 50) {
+            nodeName.push(decodedPaths[0])
+
+            // paths 배열 요소가 1개를 넘으면 '/...' 문자열 추가
+            if (decodedPaths.length > 1) {
+              nodeName.push('/...')
+
+              // '/...' 문자열을 포함한 URL 전체가 50자를 넘지 않으면 가장 마지막 path 문자열 추가
+              if (nodeName.join('').length <= 50) {
+                nodeName.push(decodedPaths[decodedPaths.length - 1])
+              }
+            }
+          } else {
+            // URL 길이가 50자를 넘지 않는다면 있는 그대로 표시
+            nodeName.push(decodedURL)
+          }
+
+          return nodeName.join('')
+        };
+
         // 노드 생성
         this.nodes.push({
           id: this.nodeIndex++,
-          name: `[${data.level}] ${decodeURI(joinedURL)}`,
+          name: `[${data.level}] ${nodeNameConvention(data.paths, joinedURL)}`,
           level: data.level,
           url: data.curr_url,
-          paths: data.paths
+          paths: data.paths,
+          keyword: data.keyword,
+          subKeyword: data.sub_keyword,
+          foundUser: [data.user_email],
+          marked: data.marked
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -433,6 +503,10 @@ export default {
             : node.name.slice(node.name.indexOf(' ') + 1),
         rest: node.level > 1 ? decodeURI(node.paths.slice(1).join('')) : ''
       }
+      this.pinnedNode.keyword.main = node.keyword
+      this.pinnedNode.keyword.sub = node.subKeyword
+      this.pinnedNode.foundUser = node.foundUser
+      this.pinnedNode.marked = node.marked
     }
   }
 }
