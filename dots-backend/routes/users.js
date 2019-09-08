@@ -69,7 +69,15 @@ router.get('/', function(req, res, next) {
 })
 
 // 특정 사용자의 정보를 조회
-router.get('/:id', function(req, res, next) {})
+router.get('/:email', function(req, res, next) {
+	User.findOneByEmail(req.params.email)
+		.then(result => {
+			res.send(result)
+		})
+		.catch(err => {
+			res.send(err)
+		})
+})
 
 // 회원가입한 사용자 정보를 DB에 저장
 router.post('/signup', function(req, res, next) {

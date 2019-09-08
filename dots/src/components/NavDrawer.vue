@@ -82,6 +82,7 @@
         <v-card-title class="headline">팀원 추가</v-card-title>
         <v-card-text>
           새로운 팀원을 추가합니다. 추가하고자 하는 팀원의 이메일을 입력해주세요.
+          <br />해당 회원의 이메일로 초대 메일
           <br />단, DoTS에 가입된 회원만 초대할 수 있습니다.
         </v-card-text>
 
@@ -91,7 +92,7 @@
           <div class="flex-grow-1"></div>
 
           <v-btn color="green darken-1" text tile @click="inviteDialog = false">취소</v-btn>
-          <v-btn color="red darken-1" text tile>확인</v-btn>
+          <v-btn color="red darken-1" text tile @click="findUser">이메일 전송</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -113,6 +114,19 @@ export default {
     return {
       inviteDialog: false,
       memberEmail: ''
+    }
+  },
+  methods: {
+    findUser () {
+      this.$http
+        .get('/user', { params: { name: this.memberEmail } })
+        .then(result => {
+          if (!result.data) {
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        })
     }
   }
 }

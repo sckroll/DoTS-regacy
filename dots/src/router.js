@@ -42,7 +42,7 @@ const pageCheck = (to, from, next) => {
           alert('오류가 발생하였습니다. 다시 로그인해주세요.')
         }
         localStorage.removeItem('userToken')
-        next('index')
+        next('/')
       }
       next()
     })
