@@ -3,7 +3,8 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"start": "node ./bin/www"
+		"start": "node ./bin/www",
+		"test": "node C://Users/kimsc/AppData/Roaming/npm/node_modules/nodemon/bin/nodemon.js ./bin/www"
 	},
 	"engines": {
 		"node": ">=8.0.0"
@@ -24,5 +25,6 @@
 		"morgan": "~1.9.1",
 		"pug": "^2.0.4",
 		"python-shell": "^1.0.8"
-	}
+	},
+	"devDependencies": {}
 }

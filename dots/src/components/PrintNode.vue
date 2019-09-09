@@ -76,7 +76,7 @@
         </v-sheet>
         <v-sheet class="pa-6" height="200px" tile>
           <div class="headline">
-            <span class="font-weight-bold">{{ pinnedNode.keyword.main }}</span>
+            <span class="font-weight-medium">{{ pinnedNode.keyword.main }}</span>
             <span
               v-for="(subKeyword, index) in pinnedNode.keyword.sub"
               :key="index"
