@@ -5,9 +5,9 @@
  * Created by Haewoong Kwak, Myeonghwa Ji, Seongchan Kim
  **********************************************************/
 
-var createError = require('http-errors')
 var express = require('express')
 var path = require('path')
+var createError = require('http-errors')
 var cookieParser = require('cookie-parser')
 var logger = require('morgan')
 var cors = require('cors')
@@ -19,9 +19,8 @@ var db = require('./config/database')
 var indexRouter = require('./routes/index')
 var usersRouter = require('./routes/users')
 var projectsRouter = require('./routes/projects')
-// var moviesRouter = require("./routes/movies");
 var crawledDataRouter = require('./routes/user-crawled-data')
-var apiRouter = require('./routes/api/index')
+var mailRouter = require('./routes/mail')
 
 var app = express()
 
@@ -46,9 +45,8 @@ app.use(cors(corsOptions))
 app.use('/', indexRouter)
 app.use('/users', usersRouter)
 app.use('/projects', projectsRouter)
-app.use('/api', apiRouter)
-// app.use("/api/movies", moviesRouter);
 app.use('/data', crawledDataRouter)
+app.use('/mail', mailRouter)
 
 // connect MongoDB
 mongoose.connect(db.uri, db.options)

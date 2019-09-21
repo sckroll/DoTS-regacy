@@ -9,42 +9,44 @@
       <div>
         <v-layout wrap>
           <div v-for="project in projects" :key="project.project_id" class="ma-0">
-            <v-hover v-slot:default="{ hover }">
-              <v-card width="400" min-height="300" class="ma-2" tile :elevation="hover ? 12 : 2">
-                <v-img
-                  class="white--text"
-                  height="200px"
-                  src="https://cdn.vuetifyjs.com/images/cards/docks.jpg"
-                >
-                  <v-card-title class="align-end fill-height">{{ project.project_name }}</v-card-title>
-                </v-img>
+            <template v-for="member in project.members">
+              <v-hover v-if="member.verified && member.email === user.email" v-slot:default="{ hover }" :key="member.email">
+                <v-card width="400" min-height="300" class="ma-2" tile :elevation="hover ? 12 : 2">
+                  <v-img
+                    class="white--text"
+                    height="200px"
+                    src="https://cdn.vuetifyjs.com/images/cards/docks.jpg"
+                  >
+                    <v-card-title class="align-end fill-height">{{ project.project_name }}</v-card-title>
+                  </v-img>
 
-                <v-card-text>
-                  <span class="subtitle-1">{{ project.team_name }}</span>
-                  <br />
-                  <span class="text--primary">
-                    <span>{{ project.description }}</span>
-                  </span>
-                </v-card-text>
+                  <v-card-text>
+                    <span class="subtitle-1">{{ project.team_name }}</span>
+                    <br />
+                    <span class="text--primary">
+                      <span>{{ project.description }}</span>
+                    </span>
+                  </v-card-text>
 
-                <v-card-actions>
-                  <v-btn
-                    text
-                    tile
-                    color="blue darken-4"
-                    @click="$router.push({ path: `/project/${project.project_id}` })"
-                  >프로젝트 시작</v-btn>
-                  <v-spacer></v-spacer>
-                  <v-btn
-                    v-if="user.email === project.founder_email"
-                    text
-                    tile
-                    color="red"
-                    @click.stop="clickedProject(project.project_name)"
-                  >삭제</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-hover>
+                  <v-card-actions>
+                    <v-btn
+                      text
+                      tile
+                      color="blue darken-4"
+                      @click="$router.push({ path: `/project/${project.project_id}` })"
+                    >프로젝트 시작</v-btn>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      v-if="user.email === project.founder_email"
+                      text
+                      tile
+                      color="red"
+                      @click.stop="clickedProject(project.project_name)"
+                    >삭제</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-hover>
+            </template>
           </div>
 
           <v-hover v-slot:default="{ hover }">

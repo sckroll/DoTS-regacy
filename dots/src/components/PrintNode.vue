@@ -1,28 +1,11 @@
 <template>
   <v-flex>
-    <v-container>
-      <v-row class="mt-5">
-        <v-col cols="10" class="pa-0">
-          <v-text-field
-            @keyup.enter="submit"
-            v-model="urlTextField"
-            label="URL을 입력하면 임시 크롤링 정보와 시각화 정보가 출력됩니다."
-            single-line
-            solo
-            clearable
-          ></v-text-field>
-        </v-col>
-        <v-col cols="1" class="pa-0">
-          <v-btn color="blue darken-4 white--text" height="48" tile @click="onSubmit">
-            크롤링
-            <br />시작
-          </v-btn>
-        </v-col>
-        <v-col cols="1" class="pa-0">
-          <v-btn color="warning" height="48" tile @click="truncate">초기화</v-btn>
-        </v-col>
-      </v-row>
-    </v-container>
+    <v-layout class="mt-4 text-center title font-weight-light">
+      <v-spacer></v-spacer>
+      <v-btn v-if="!isCrawlingStarted" color="success mr-4" tile dark @click="startCrawling">크롤링 시작</v-btn>
+      <v-btn v-else color="warning mr-4" tile dark @click="stopCrawling">크롤링 중지</v-btn>
+      <v-btn color="blue darken-4 mr-4" tile dark @click="truncate">초기화</v-btn>
+    </v-layout>
 
     <v-layout justify-center class="d3-canvas">
       <d3-network
@@ -44,7 +27,7 @@
         </v-sheet>
         <v-sheet class="pa-6" tile color="blue lighten-2">
           <v-row no-gutters>
-            <v-col cols="2">
+            <v-col cols="3">
               <v-sheet tile color="blue lighten-2" class="headline">
                 <span class="font-weight-light">노드 ID:</span>
                 <span class="font-weight-medium ml-2">{{ pinnedNode.id }}</span>
@@ -56,25 +39,29 @@
                 <span class="font-weight-medium ml-2">{{ pinnedNode.level }}</span>
               </v-sheet>
             </v-col>
-            <v-col cols="7" v-if="pinnedNode.foundUser !== ''">
-              <v-sheet tile color="blue lighten-2" class="headline">
-                <span class="font-weight-light">이 URL을 방문한 팀원:</span>
+            <v-col cols="6">
+              <v-sheet v-if="pinnedNode.tagged.length > 0" tile color="blue lighten-2" class="headline">
+                <span class="font-weight-light">태그 표시한 팀원:</span>
                 <span
                   v-for="member in project.members"
                   :key="member.email"
                   class="font-weight-medium ml-2"
                 >
-                  <span v-for="(user, index) in pinnedNode.foundUser" :key="index" class="mx-2">
+                  <span v-for="(user, index) in pinnedNode.tagged" :key="index" class="mx-2">
                     <v-avatar v-if="member.email === user" :color="member.color" size="32">
                       <span class="white--text subtitle-2">{{ member.last_name.charAt(0) }}</span>
                     </v-avatar>
                   </span>
                 </span>
               </v-sheet>
+              <v-sheet v-else tile color="blue lighten-2" class="headline">
+                <span class="font-weight-light">태그 표시한 팀원:</span>
+                <span class="font-weight-medium ml-2">없음</span>
+              </v-sheet>
             </v-col>
           </v-row>
         </v-sheet>
-        <v-sheet class="pa-6" height="200px" tile>
+        <v-sheet v-if="pinnedNode.id !== 1" class="pa-6" tile>
           <div class="headline">
             <span class="font-weight-medium">{{ pinnedNode.keyword.main }}</span>
             <span
@@ -84,8 +71,13 @@
             >, {{ subKeyword }}</span>
           </div>
         </v-sheet>
+        <v-sheet v-if="pinnedNode.id !== 1" class="pa-6" tile dark color="grey darken-3">
+          <div class="headline">
+            <span class="font-weight-light">{{ pinnedNode.memo }}</span>
+          </div>
+        </v-sheet>
       </v-bottom-sheet>
-      <!-- <node-detail-sheet :sheet="sheet"></node-detail-sheet> -->
+      <!-- <node-detail-sheet :pinnedNode="pinnedNode" :project="project" :sheet="sheet" @update="updateSheet"></node-detail-sheet> -->
     </div>
   </v-flex>
 </template>
@@ -123,8 +115,10 @@ export default {
       fontSize: 20,
       linkWidth: 5,
       canvasWidth: window.innerWidth,
-      canvasHeight: window.innerHeight - 200,
+      canvasHeight: window.innerHeight - 130,
       nodeIndex: 0,
+      intervalFunc: 0,
+      isCrawlingStarted: false,
       pinnedNode: {
         id: 0,
         name: {
@@ -138,8 +132,7 @@ export default {
           main: '',
           sub: []
         },
-        foundUser: [],
-        marked: [],
+        tagged: [],
         memo: ''
       }
     }
@@ -191,85 +184,91 @@ export default {
   mounted () {
     this.options.size.w = this.canvasWidth
     this.options.size.h = this.canvasHeight
+
+    // // 로컬 저장소 값이 변경되었을 때 발생하는 이벤트
+    // // https://www.experts-exchange.com/questions/29143892/How-to-Set-JavaScript-Event-Listener-on-Local-Storage-Value-in-Same-Window.html
+    // window.addEventListener('storagechange', function(e) {
+    //   if (e.detail.type == 'set') {
+    //     console.log('LocalStorage value ' + e.detail.key + ' set to ' + e.detail.value);
+
+    //     if (e.detail.key === 'currURL') {
+    //       getCrawledData()
+    //       // this.prevURL = localStorage.getItem('prevURL')
+    //     }
+    //   }
+    // });
   },
   methods: {
-    // 크롤링 시작
-    submit (val) {
-      var value = '';
+    // 크롤링 시작 함수 (5초마다 크롤링 수행)
+    startCrawling () {
+      this.isCrawlingStarted = true
+      this.intervalFunc = setInterval(() => {
+        this.getCrawledData()
+      }, 5000)
 
-      if (val.target) {
-        value = val.target.value
-      } else {
-        value = val
-      }
+      window.open('https://www.google.com')
+    },
+    // 크롤링 중지 함수
+    stopCrawling () {
+      this.isCrawlingStarted = false
+      clearInterval(this.intervalFunc)
+    },
+    // 자동 크롤링 수행 함수
+    getCrawledData () {
+      const decoded = jwtDecode(localStorage.getItem('userToken'))
 
-      if (value !== '') {
-        const decoded = jwtDecode(localStorage.getItem('userToken'))
-        this.currURL = value
+      this.prevURL = localStorage.getItem('prevURL')
+      this.currURL = localStorage.getItem('currURL')
 
-        // prevURL을 이용하여 부모 노드를 검색
-        // (추후에 크롬 API 연동 과정에서 document.referrer로 대체)
-        var parentNode = this.nodes.find(node => {
-          if (this.prevURL === '') {
-            return node.name.split(' ')[1] === 'etc.';
+      // prevURL을 이용하여 부모 노드를 검색
+      var parentNode = this.nodes.find(node => {
+        if (this.prevURL === '') {
+          return node.name.split(' ')[1] === 'etc.';
+        } else {
+          return node.url === this.prevURL
+        }
+      })
+      console.log(parentNode)
+
+      var parentId = parentNode
+        ? parentNode.id
+        : this.prevURL === ''
+          ? this.nodeIndex
+            : 1
+      var parentLevel = parentNode
+        ? parentNode.level
+          : 1
+
+      // axios를 이용, 서버에 값 요청
+      this.$http
+        .post('/data/add', {
+          userEmail: decoded.email,
+          userName: decoded.first_name + ' ' + decoded.last_name,
+          prevURL: this.prevURL,
+          currURL: this.currURL,
+          parentId,
+          parentLevel
+        })
+        .then(response => {
+          if (response.data.notUrl) {
+            if (response.data.isMainPage) {
+              // Google 메인 페이지인 경우 (DB에 저장되지 않음)
+              this.crawledData.level = response.data.level
+              this.crawledData.paths = response.data.paths
+            } else {
+              // 올바른 URL이 아닌 경우
+              console.log('올바른 URL이 아닙니다.')
+            }
           } else {
-            return node.url === this.prevURL
+            this.crawledData = response.data
+
+            // 불러온 데이터로부터 노드 생성 및 추가
+            this.addNodesfromCrawledData(this.crawledData)
           }
         })
-        console.log(parentNode)
-        var parentId = parentNode
-          ? parentNode.id
-          : this.prevURL === ''
-            ? this.nodeIndex
-            : 0
-        var parentLevel = parentNode
-          ? parentNode.level
-          : this.prevURL === ''
-            ? 1
-            : 0
-
-        // axios를 이용, 서버에 값 요청
-        this.$http
-          .post('/data/add', {
-            userEmail: decoded.email,
-            userName: decoded.first_name + ' ' + decoded.last_name,
-            prevURL: this.prevURL,
-            currURL: this.currURL,
-            parentId,
-            parentLevel
-          })
-          .then(response => {
-            if (response.data.notUrl) {
-              if (response.data.isMainPage) {
-                // Google 메인 페이지인 경우 (DB에 저장되지 않음)
-                this.crawledData.level = response.data.level
-                this.crawledData.paths = response.data.paths
-
-                this.prevURL = '';
-              } else {
-                // 올바른 URL이 아닌 경우
-                alert('올바른 URL이 아닙니다.')
-                this.urlTextField = '';
-              }
-            } else {
-              this.crawledData = response.data
-
-              // 불러온 데이터로부터 노드 생성 및 추가
-              this.addNodesfromCrawledData(this.crawledData)
-
-              this.prevURL = this.currURL
-            }
-          })
-          .catch(err => {
-            throw err
-          })
-      } else {
-        this.currURL = '';
-      }
-    },
-    onSubmit () {
-      var val = this.urlTextField ? this.urlTextField : '';
-      this.submit(val)
+        .catch(err => {
+          throw err
+        })
     },
     // 모든 노드 삭제
     truncate () {
@@ -353,14 +352,19 @@ export default {
     addInitialNodesAndLinks (data, label) {
       var isPushed = false // 노드 중복 여부
 
-      // 이미 존재하는 노드인지 검사
-      this.nodes.forEach((item, index) => {
-        if (item.level === 1) {
-          if (item.name === `[1] ${label}`) {
-            isPushed = true
+      // 레벨 1 노드의 이름이 존재할 경우에만 노드 생성
+      if (label === '') {
+        isPushed = true
+      } else {
+        // 이미 존재하는 노드인지 검사
+        this.nodes.forEach((item, index) => {
+          if (item.level === 1) {
+            if (item.name === `[1] ${label}`) {
+              isPushed = true
+            }
           }
-        }
-      })
+        })
+      }
 
       // 중복되는 노드가 없다면 새 노드 생성 및 간선 연결
       if (!isPushed) {
@@ -370,10 +374,11 @@ export default {
           _color: 'cyan',
           level: 1,
           url: label !== 'etc.' ? data.curr_url : label,
+          paths: label !== 'etc.' ? data.paths : null,
           keyword: label !== 'etc.' ? data.keyword : '',
           subKeyword: label !== 'etc.' ? data.sub_keyword : '',
-          foundUser: label !== 'etc.' ? [data.user_email] : '',
-          marked: label !== 'etc.' ? data.marked : ''
+          tagged: label !== 'etc.' ? data.tagged : '',
+          memo: label !== 'etc.' ? data.memo : '',
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -397,7 +402,7 @@ export default {
 
       // 각 노드들과 비교하여 중복되는 이름의 노드가 존재하는지 검사
       var duplicatedNode = this.nodes.find(node => {
-        return node.name.split(' ')[1] === joinedURL
+        return node.url === data.curr_url
       })
 
       // 중복된 노드가 있는 경우 간선까지 중복되는지 검사
@@ -454,8 +459,8 @@ export default {
           paths: data.paths,
           keyword: data.keyword,
           subKeyword: data.sub_keyword,
-          foundUser: [data.user_email],
-          marked: data.marked
+          tagged: data.tagged,
+          memo: data.memo
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -485,7 +490,7 @@ export default {
     },
     // 간선 클릭 시 이벤트
     linkClick (event, link) {
-      alert('selected: ' + link.sid + ' -> ' + link.tid)
+      console.log('selected: ' + link.sid + ' -> ' + link.tid)
     },
     // 선택된 노드에 대한 정보를 객체에 저장
     savePinnedNode (node) {
@@ -505,9 +510,12 @@ export default {
       }
       this.pinnedNode.keyword.main = node.keyword
       this.pinnedNode.keyword.sub = node.subKeyword
-      this.pinnedNode.foundUser = node.foundUser
-      this.pinnedNode.marked = node.marked
-    }
+      this.pinnedNode.tagged = node.tagged
+      this.pinnedNode.memo = node.memo
+    },
+    // updateSheet () {
+    //   this.sheet = !this.sheet
+    // }
   }
 }
 </script>

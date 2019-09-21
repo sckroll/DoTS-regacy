@@ -56,28 +56,49 @@ const getToken = async t => {
 	return { user: vt, refreshToken: nt }
 }
 
+// // DB에 등록된 사용자 목록을 조회
+// router.get('/', function(req, res, next) {
+// 	User.findAll()
+// 		.then(result => {
+// 			res.send(result)
+// 		})
+// 		.catch(err => {
+// 			throw err
+// 		})
+// 	res.send(req.query)
+// })
+
 // DB에 등록된 사용자 목록을 조회
 router.get('/', function(req, res, next) {
-	User.findAll()
-		.then(result => {
-			res.send(result)
-		})
-		.catch(err => {
-			throw err
-		})
-	res.send(req.query)
-})
-
-// 특정 사용자의 정보를 조회
-router.get('/:email', function(req, res, next) {
-	User.findOneByEmail(req.params.email)
+	if (req.query.email) {
+		User.findOneByEmail(req.query.email)
 		.then(result => {
 			res.send(result)
 		})
 		.catch(err => {
 			res.send(err)
 		})
+	} else {
+		User.findAll()
+		.then(result => {
+			res.send(result)
+		})
+		.catch(err => {
+			throw err
+		})
+	}
 })
+
+// // 특정 사용자의 정보를 조회
+// router.get('/:email', function(req, res, next) {
+// 	User.findOneByEmail(req.params.email)
+// 		.then(result => {
+// 			res.send(result)
+// 		})
+// 		.catch(err => {
+// 			res.send(err)
+// 		})
+// })
 
 // 회원가입한 사용자 정보를 DB에 저장
 router.post('/signup', function(req, res, next) {
@@ -126,14 +147,10 @@ router.post('/login', function(req, res, next) {
 							res.send(err)
 						})
 				} else {
-					throw new Error(
-						'가입된 이메일이 존재하지 않거나 올바른 비밀번호가 아닙니다.'
-					)
+					res.json({ error: '가입된 이메일이 존재하지 않거나 올바른 비밀번호가 아닙니다.' })
 				}
 			} else {
-				throw new Error(
-					'가입된 이메일이 존재하지 않거나 올바른 비밀번호가 아닙니다.'
-				)
+				res.json({ error: '가입된 이메일이 존재하지 않거나 올바른 비밀번호가 아닙니다.' })
 			}
 		})
 		.catch(err => {

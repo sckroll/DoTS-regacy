@@ -7,7 +7,7 @@ const UsersSchema = new mongoose.Schema(
 		first_name: { type: String },
 		last_name: { type: String },
 		password: { type: String, required: true },
-		color: { type: String }
+		color: { type: String, required: true, default: '#000000' }
 	},
 	{
 		timestamps: true

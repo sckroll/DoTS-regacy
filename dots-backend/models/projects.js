@@ -22,8 +22,10 @@ const ProjectsSchema = new mongoose.Schema(
 				email: { type: String, required: true, lowercase: true },
 				first_name: { type: String },
 				last_name: { type: String },
-				position: { type: String },
-				color: { type: String }
+				position: { type: String, required: true, default: '팀장' },
+				color: { type: String, required: true, default: '#000000' },
+				verified: { type: Boolean, required: true, default: false },
+				verify_key: { type: String, required: true }
 			}
 			// {
 			// 	user: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },

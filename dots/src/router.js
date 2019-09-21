@@ -16,6 +16,8 @@ import UserMenu from './components/UserMenu.vue'
 import User from './components/User.vue'
 import CreateProject from './components/CreateProject.vue'
 import ProjectNav from './components/ProjectNav.vue'
+import NeedExtension from './components/NeedExtension.vue'
+import ProjectInviteAuth from './components/ProjectInviteAuth.vue'
 
 Vue.use(Router)
 
@@ -24,6 +26,7 @@ Vue.use(Router)
 //   process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : '/api'
 const apiRootPath =
   process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : ''
+const extensionId = 'jpiagnpijljkijffgaidojpebhmijljc'
 
 // 토큰의 유효성을 검사하기 위해 토큰을 헤더에 담아 서버로 전달
 const pageCheck = (to, from, next) => {
@@ -34,6 +37,12 @@ const pageCheck = (to, from, next) => {
       }
     })
     .then(result => {
+      // 모든 인터벌 중지 (임시)
+      for (var i = 0; i < 10; i++) {
+        clearInterval(i)
+      }
+
+      // JWT 에러 처리
       if (result.data.message) {
         if (result.data.message === 'jwt expired') {
           alert('로그인 시간이 만료되었습니다. 다시 로그인해주세요.')
@@ -42,8 +51,26 @@ const pageCheck = (to, from, next) => {
           alert('오류가 발생하였습니다. 다시 로그인해주세요.')
         }
         localStorage.removeItem('userToken')
+        chrome.runtime.sendMessage(extensionId, { userToken: '' }, response => {
+          console.log(response.result)
+        })
         next('/')
       }
+
+      // 크롬 확장 프로그램에 토큰 전달
+      var token = localStorage.getItem('userToken')
+      chrome.runtime.sendMessage(extensionId, { userToken: token }, response => {
+        if (chrome.runtime.lastError) {
+          next('/need-extension')
+        } else {
+          console.log(response.result)
+
+          // 확장 프로그램 설치 페이지에서 사용자 메인 메뉴로 이동
+          if (location.href.indexOf('/need-extension') !== -1) {
+            next('/p')
+          }
+        }
+      })
       next()
     })
     .catch(err => {
@@ -146,8 +173,17 @@ export default new Router({
           path: '/p/create-project',
           name: 'create-project',
           component: CreateProject
+        },
+        {
+          path: '/need-extension',
+          name: 'need-extension',
+          component: NeedExtension
         }
       ]
+    },
+    {
+      path: '/auth',
+      component: ProjectInviteAuth
     },
     {
       // 그 외의 경로로 접근할 경우 루트로 리다이렉트

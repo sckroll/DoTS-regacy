@@ -5,15 +5,15 @@ const crawledDataSchema = new mongoose.Schema(
 	{
 		user_email: { type: String, required: true, lowercase: true },
 		user_name: { type: String },
-		// keyword: {type: String, required: true, index: 'hashed'},
 		keyword: { type: String },
 		sub_keyword: { type: [String] },
-		marked: { type: [String] },
+		tagged: { type: [String] },
 		prev_url: { type: String },
 		curr_url: { type: String, required: true },
 		level: { type: Number },
 		parent_id: { type: Number },
-		paths: { type: [String] }
+		paths: { type: [String] },
+		memo: { type: String }
 	},
 	{
 		timestamps: true

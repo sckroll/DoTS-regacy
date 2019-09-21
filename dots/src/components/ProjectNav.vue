@@ -1,23 +1,22 @@
 <template>
   <v-app>
-    <nav-drawer :drawer="drawer" :project="project"></nav-drawer>
+    <nav-drawer :drawer="drawer" :project="project" @update="updateDrawer"></nav-drawer>
 
     <v-app-bar app color="blue darken-4" dark>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title class="headline">
         <span class="font-weight-medium">{{ project.project_name }}</span>
+        <span class="font-weight-light"> by {{ project.team_name }}</span>
       </v-toolbar-title>
-      <v-spacer></v-spacer>
+      <!-- <v-spacer></v-spacer>
       <v-toolbar-title class="headline">
-        <span class="font-weight-light">{{ project.team_name }}</span>
-      </v-toolbar-title>
+        
+      </v-toolbar-title> -->
     </v-app-bar>
 
     <v-content>
       <v-layout justify-center>
-        <v-flex xl8 lg8 sm10>
-          <print-node v-if="isLoaded" :project="project"></print-node>
-        </v-flex>
+        <print-node v-if="isLoaded" :project="project"></print-node>
       </v-layout>
     </v-content>
   </v-app>
@@ -52,6 +51,11 @@ export default {
       .catch(err => {
         console.log(err)
       })
+  },
+  methods: {
+    updateDrawer () {
+      this.drawer = !this.drawer
+    }
   }
 }
 </script>

@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const crypto = require('crypto')
 const Project = require('../models/projects')
 // const User = require('../models/users')
 
@@ -32,6 +33,60 @@ router.get('/current', function(req, res, next) {
 		})
 })
 
+router.get('/auth', function(req, res, next) {
+	var project_id = req.query.project
+	var member_email = req.query.member
+	var token = req.query.token
+	var userEmail = req.query.userEmail
+
+	// 로그인 토큰 검사
+	if (userEmail) {
+		// 프로젝트 팀원과 사용자 일치 여부 검사
+		if (member_email === userEmail) {
+			// 프로젝트 ID 검사
+			Project.findOneById(project_id)
+				.then(project => {
+					// 프로젝트 팀원 검사
+					var member_index = project.members.findIndex(member => {
+						return member.email === member_email
+					})
+					console.log(member_index)
+					if (member_index !== -1) {
+						// 인증 토큰 검사
+						if (project.members[member_index].verify_key === token) {
+							var updated_project = project
+							var verified_member = project.members[member_index]
+							verified_member.verified = true
+
+							// 기존 프로젝트 멤버 삭제 후 새 멤버 추가
+							updated_project.members.splice(member_index, 1)
+							updated_project.members.push(verified_member)
+
+							Project.findOneAndUpdate({ project_id }, updated_project, { new: true }, (err, doc) => {
+								if (err) {
+									res.json({errorMessage: '프로젝트 팀원 추가에 오류가 발생했습니다.'})
+								} else {
+									res.send(doc)
+								}
+							})
+						} else {
+							res.json({errorMessage: '인증 토큰이 일치하지 않습니다.'})
+						}
+					} else {
+						res.json({errorMessage: '프로젝트에 초대받지 않은 회원입니다.'})
+					}
+				})
+				.catch(err => {
+					res.json({errorMessage: '존재하지 않는 프로젝트입니다.'})
+				})
+		} else {
+			res.json({errorMessage: '올바른 초대 주소가 아닙니다.'})
+		}
+	} else {
+		res.json({errorMessage: '로그인이 필요합니다. 로그인 후에 다시 링크를 클릭해주세요.'})
+	}
+})
+
 // 특정 프로젝트의 정보를 조회 (존재한다면 프로젝트 ID를 반환)
 // 우선은 프로젝트 ID를 랜덤 문자열로 하지만, 이미 존재하는 ID와 충돌할 경우 어떻게 할 것인가?
 router.get('/find', function(req, res, next) {
@@ -57,6 +112,11 @@ router.post('/create', function(req, res, next) {
 		.then(result => {
 			if (!result) {
 				// 중복되는 이름이 없다면
+
+				const firstKey = crypto.randomBytes(256).toString('base64').substr(100, 16)
+				const secondKey = crypto.randomBytes(256).toString('hex').substr(200, 16)
+				const verifyKey = firstKey + secondKey
+
 				const newProject = new Project({
 					project_id: req.body.projectId,
 					project_name: req.body.projectName,
@@ -72,7 +132,9 @@ router.post('/create', function(req, res, next) {
 					first_name: req.body.user.firstName,
 					last_name: req.body.user.lastName,
 					position: '팀장',
-					color: req.body.user.color
+					color: req.body.user.color,
+					verified: true,
+					verify_key: verifyKey
 				}
 
 				newProject.members.push(newMember)
