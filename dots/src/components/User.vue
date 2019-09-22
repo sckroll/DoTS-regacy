@@ -138,17 +138,28 @@ export default {
     },
     confirmRemove () {
       if (this.currentProject === this.confirmStr) {
-        // 프로젝트 도큐먼트 삭제
+        // 프로젝트 통합 컬렉션 삭제
         this.$http
-          .delete(`/projects/${this.currentProject}`)
+          .delete(`/data/${this.currentProject}_before_data`)
           .then(result => {})
           .catch(err => {
             console.log(err)
           })
 
-        // 프로젝트 컬렉션 삭제
+        // 모든 프로젝트 사용자 컬렉션 삭제
+        var projectObj = this.projects.find(val => val.project_name === this.currentProject)
+        projectObj.members.forEach(val => {
+          this.$http
+            .delete(`/data/${this.currentProject}_${val.email}`)
+            .then(result => {})
+            .catch(err => {
+              console.log(err)
+            })
+        })
+
+        // 프로젝트 도큐먼트 삭제
         this.$http
-          .delete(`/data/${this.currentProject}`)
+          .delete(`/projects/${this.currentProject}`)
           .then(result => {})
           .catch(err => {
             console.log(err)

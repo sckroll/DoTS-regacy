@@ -15,7 +15,7 @@
             @click:append="visibility = !visibility"
           ></v-text-field>
           <div class="text-center">
-            <v-btn color="success" tile text @click="onSubmit" :disabled="!email || !password">로그인</v-btn>
+            <v-btn color="success" tile text @click="onSubmit" @keypress.enter="onSubmit" :disabled="!email || !password">로그인</v-btn>
           </div>
         </v-form>
       </v-flex>

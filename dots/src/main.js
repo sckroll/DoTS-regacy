@@ -9,6 +9,7 @@ import VeeValidate from 'vee-validate';
 Vue.use(VeeValidate)
 
 Vue.config.productionTip = false
+Vue.prototype.EventBus = new Vue()
 
 new Vue({
   router,

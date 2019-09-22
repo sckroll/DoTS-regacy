@@ -1,11 +1,77 @@
 <template>
   <v-flex>
-    <v-layout class="mt-4 text-center title font-weight-light">
+    <v-app-bar color="grey darken-3" class="text-center title font-weight-light" dark>
+      <!-- 팀원 아바타 버튼 -->
+      <v-tooltip bottom transition="fade-transition">
+        <template v-slot:activator="{ on }">
+          <v-avatar color="white" size="40" class="mr-4" v-on="on" style="cursor: pointer;" v-ripple @click="getMemberCrawledData('', '', '')">
+            <span class="black--text subtitle-2">ALL</span>
+          </v-avatar>
+        </template>
+        <span>모든 데이터 보기</span>
+      </v-tooltip>
+      <v-tooltip v-for="member in project.members" :key="member.email" bottom transition="fade-transition">
+        <template v-if="member.verified" v-slot:activator="{ on }">
+          <span class="font-weight-medium" v-on="on">
+            <v-avatar :color="member.color" size="40" class="mr-4" style="cursor: pointer;" v-ripple @click="getMemberCrawledData(member.email, member.first_name, member.last_name)">
+              <span class="white--text subtitle-2">{{ member.last_name.charAt(0) }}</span>
+            </v-avatar>
+          </span>
+        </template>
+        <span v-if="member.verified">{{ member.first_name + ' ' + member.last_name }}</span>
+        <br>
+        <span>{{ member.email }}</span>
+      </v-tooltip>
+
       <v-spacer></v-spacer>
-      <v-btn v-if="!isCrawlingStarted" color="success mr-4" tile dark @click="startCrawling">크롤링 시작</v-btn>
-      <v-btn v-else color="warning mr-4" tile dark @click="stopCrawling">크롤링 중지</v-btn>
-      <v-btn color="blue darken-4 mr-4" tile dark @click="truncate">초기화</v-btn>
-    </v-layout>
+
+      <!-- 기능 버튼 -->
+      <v-tooltip v-for="nodeFunction in nodeFunctions" :key="nodeFunction.name" bottom transition="fade-transition">
+        <template v-slot:activator="{ on }">
+          <v-avatar :disabled="isCrawlingStarted" :color="isCrawlingStarted ? 'grey darken-1' : 'blue darken-3'" v-on="on" size="40" class="mr-4" style="cursor: pointer;" v-ripple @click="nodeFunction.func">
+            <v-icon>{{ nodeFunction.icon }}</v-icon>
+          </v-avatar>
+        </template>
+        <span>{{ nodeFunction.name }}</span>
+      </v-tooltip>
+
+      <!-- 데이터 초기화 버튼 -->
+      <v-tooltip v-if="currMember === ''" bottom transition="fade-transition">
+        <template v-slot:activator="{ on }">
+          <v-avatar :disabled="isCrawlingStarted" color="error" class="mr-4" v-on="on" size="40" style="cursor: pointer;" v-ripple @click="truncate">
+            <v-icon>mdi-delete-forever</v-icon>
+          </v-avatar>
+        </template>
+        <span>전체 데이터 초기화</span>
+      </v-tooltip>
+      <v-tooltip v-else bottom transition="fade-transition">
+        <template v-slot:activator="{ on }">
+          <v-avatar :disabled="isCrawlingStarted" color="error" class="mr-4" v-on="on" size="40" style="cursor: pointer;" v-ripple @click="truncate">
+            <v-icon>mdi-account-remove</v-icon>
+          </v-avatar>
+        </template>
+        <span>사용자 데이터 초기화</span>
+      </v-tooltip>
+
+      <!-- 크롤링 시작 버튼 -->
+      <v-tooltip v-if="!isCrawlingStarted" bottom transition="fade-transition">
+        <template v-slot:activator="{ on }">
+          <v-avatar :disabled="currMember === ''" color="success" v-on="on" size="40" style="cursor: pointer;" v-ripple @click="startCrawling">
+            <v-icon>mdi-play</v-icon>
+          </v-avatar>
+        </template>
+        <span>크롤링 시작</span>
+      </v-tooltip>
+      <v-tooltip v-else bottom transition="fade-transition">
+        <template v-slot:activator="{ on }">
+          <v-avatar color="warning" v-on="on" size="40" style="cursor: pointer;" v-ripple @click="stopCrawling">
+            <v-icon>mdi-pause</v-icon>
+          </v-avatar>
+        </template>
+        <span>크롤링 중지</span>
+      </v-tooltip>
+    </v-app-bar>
+
 
     <v-layout justify-center class="d3-canvas">
       <d3-network
@@ -22,7 +88,7 @@
           <div class="display-1 white--text">{{ pinnedNode.name.host }}</div>
           <div class="headline grey--text text--lighten-1">{{ pinnedNode.name.rest }}</div>
         </v-sheet>
-        <v-sheet class="pa-6" tile color="blue darken-3">
+        <v-sheet class="px-6 py-2" tile color="blue darken-3">
           <div class="title-1 font-weight-light grey--text text--lighten-2">{{ pinnedNode.url }}</div>
         </v-sheet>
         <v-sheet class="pa-6" tile color="blue lighten-2">
@@ -71,10 +137,10 @@
             >, {{ subKeyword }}</span>
           </div>
         </v-sheet>
-        <v-sheet v-if="pinnedNode.id !== 1" class="pa-6" tile dark color="grey darken-3">
-          <div class="headline">
-            <span class="font-weight-light">{{ pinnedNode.memo }}</span>
-          </div>
+        <v-sheet v-if="pinnedNode.memo !== ''" class="pa-6" tile dark color="grey darken-3">
+            <span class="headline font-weight-medium">MEMO</span>
+            <br>
+            <span class="title font-weight-light">{{ pinnedNode.memo }}</span>
         </v-sheet>
       </v-bottom-sheet>
       <!-- <node-detail-sheet :pinnedNode="pinnedNode" :project="project" :sheet="sheet" @update="updateSheet"></node-detail-sheet> -->
@@ -85,6 +151,7 @@
 <script>
 import D3Network from 'vue-d3-network';
 import jwtDecode from 'jwt-decode';
+import queryParser from 'query-string'
 // import NodeDetailSheet from './NodeDetailSheet';
 
 // 사용할 검색 엔진
@@ -102,6 +169,7 @@ export default {
   },
   data () {
     return {
+      decoded: '',
       prevURL: '',
       currURL: '',
       prevQuery: '',
@@ -119,6 +187,7 @@ export default {
       nodeIndex: 0,
       intervalFunc: 0,
       isCrawlingStarted: false,
+      currMember: '',
       pinnedNode: {
         id: 0,
         name: {
@@ -134,7 +203,29 @@ export default {
         },
         tagged: [],
         memo: ''
-      }
+      },
+      nodeFunctions: [
+        {
+          name: '태그 표시된 노드 표시',
+          icon: 'mdi-tag-multiple',
+          func: this.getTaggedNodes
+        },
+        {
+          name: '연관성 높은 노드 표시',
+          icon: 'mdi-link-variant',
+          func: this.getRelevantNodes
+        },
+        {
+          name: '다수 / 소수 구별',
+          icon: 'mdi-account-multiple-outline',
+          func: this.distinguishNodes
+        },
+        {
+          name: '최적 경로 표시',
+          icon: 'mdi-map-marker-path',
+          func: this.getOptimizedNodes
+        }
+      ]
     }
   },
   computed: {
@@ -164,6 +255,8 @@ export default {
     }
   },
   created () {
+    this.decoded = jwtDecode(localStorage.getItem('userToken'))
+
     // 루트 노드, etc. 노드 초기화
     this.addZeroNode()
     this.addInitialNodesAndLinks('', 'etc.')
@@ -215,26 +308,49 @@ export default {
     },
     // 자동 크롤링 수행 함수
     getCrawledData () {
-      const decoded = jwtDecode(localStorage.getItem('userToken'))
-
       this.prevURL = localStorage.getItem('prevURL')
       this.currURL = localStorage.getItem('currURL')
 
       // prevURL을 이용하여 부모 노드를 검색
-      var parentNode = this.nodes.find(node => {
+      // var parentNode = this.nodes.find(node => {
+      //   if (this.prevURL === '') {
+      //     return node.name.split(' ')[1] === 'etc.';
+      //   } else {
+      //     return node.currURL === this.prevURL
+      //   }
+      // })
+
+      // // var parentId = parentNode
+      // //   ? parentNode.id
+      // //   : this.prevURL === ''
+      // //     ? this.nodeIndex
+      // //       : 1
+      // var parentLevel = parentNode
+      //   ? parentNode.level
+      //     : 1
+
+      // 부모 노드 검색 결과가 여러 개일 경우, 본인이 찾은 노드를 부모 노드로 선정
+      var parentNodes = this.nodes.filter(node => {
         if (this.prevURL === '') {
           return node.name.split(' ')[1] === 'etc.';
         } else {
-          return node.url === this.prevURL
+          return node.currURL === this.prevURL
         }
       })
-      console.log(parentNode)
+      console.log(parentNodes)
 
-      var parentId = parentNode
-        ? parentNode.id
-        : this.prevURL === ''
-          ? this.nodeIndex
-            : 1
+      var parentNode
+      if (parentNodes.length > 1) {
+        parentNode = parentNodes.find(node => node.founder === this.decoded.email)
+      } else if (parentNodes.length === 1) {
+        parentNode = parentNodes[0]
+      }
+
+      // var parentId = parentNode
+      //   ? parentNode.id
+      //   : this.prevURL === ''
+      //     ? this.nodeIndex
+      //       : 1
       var parentLevel = parentNode
         ? parentNode.level
           : 1
@@ -242,11 +358,12 @@ export default {
       // axios를 이용, 서버에 값 요청
       this.$http
         .post('/data/add', {
-          userEmail: decoded.email,
-          userName: decoded.first_name + ' ' + decoded.last_name,
+          projectName: this.project.project_name,
+          userEmail: this.decoded.email,
+          userName: this.decoded.first_name + ' ' + this.decoded.last_name,
           prevURL: this.prevURL,
           currURL: this.currURL,
-          parentId,
+          // parentId,
           parentLevel
         })
         .then(response => {
@@ -294,6 +411,68 @@ export default {
           })
       }
     },
+    // 기능 1: 사용자 별로 조사한 URL로 노드 생성
+    getMemberCrawledData (memberEmail, memberFirstName, memberLastName) {
+      if (this.isCrawlingStarted) return
+
+      // 부모 컴포넌트에 현재 사용자의 이름 전달
+      this.EventBus.$emit('sendMemberName', { memberFirstName, memberLastName })
+
+      // 사용자 컬렉션의 데이터를 얻어 올 경우 기능 및 크롤링 버튼을 비활성화
+      this.currMember = memberEmail
+
+      // 노드 초기화
+      this.nodes = []
+      this.links = []
+      this.nodeIndex = 0
+      this.urlTextField = '';
+      this.prevURL = '';
+      this.prevQuery = '';
+
+      // 루트 노드, etc. 노드 초기화
+      this.addZeroNode()
+      this.addInitialNodesAndLinks('', 'etc.')
+
+      // 노드 정보를 서버에 요청 (팀원 이메일이 빈 문자열이면 통합 컬렉션의 데이터를 불러옴)
+      this.$http
+        .get('/data', {
+          params: {
+            name: this.project.project_name,
+            memberEmail
+          }
+        })
+        .then(result => {
+          this.totalData = result.data
+          if (this.totalData.length > 0) {
+            // 이후의 노드 초기화
+            this.initializeNodes()
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+    // 기능 2: 통합 컬렉션 내 노드를 클릭했을 때 연관 키워드 출력
+    // 플라스크 서버에 요청을 주는 식으로 할 것
+
+    // 기능 3: 사용자들이 태그 표시한 URL로만 노드 생성
+    getTaggedNodes () {
+      alert('getTaggedNodes')
+    },
+    // 기능 4: 연관성 높은 노드들을 표현
+    getRelevantNodes () {
+      alert('getRelevantNodes')
+    },
+    // 기능 5: 방문 횟수를 기반으로 다수/소수가 조사한 자료 구별
+    // 통합 컬렉션 내의 방문 비율()을 사용하여 0.7? 이상이면 간선을 파란색으로,
+    // 그 외일 경우 간선을 빨간색으로 표현할 것
+    distinguishNodes () {
+      alert('distinguishNodes')
+    },
+    // 기능 6: 최적 경로 계산 (웹 페이지 방문 비율, 태그 유무만 사용)
+    getOptimizedNodes () {
+      alert('getOptimizedNodes')
+    },
     // 노드 초기화
     initializeNodes () {
       // 각 URL에 대해 진행
@@ -315,10 +494,6 @@ export default {
           this.prevQuery = '';
         }
       } else {
-        // 현재는 레벨 1 노드 접속 후 다른 웹사이트 접속 시 etc. 노드에 연결되지 않음
-        // 추후에 검색 결과 페이지 내 prevURL과 일치하는 URL 링크가 있을 경우에만
-        // 아래 코드를 실행하도록 작성
-
         if (this.prevURL.indexOf('www.' + SEARCH_ENG) !== -1) {
           // 이전 URL이 검색 결과 페이지일 경우
           nodeLevel1 = this.prevQuery
@@ -341,7 +516,7 @@ export default {
       this.nodes.push({
         id: this.nodeIndex++,
         name: this.project.topic,
-        _color: 'blue',
+        _color: '#0D47A1',
         level: 0,
         fx: this.canvasWidth / 2,
         fy: this.canvasHeight / 2
@@ -371,14 +546,18 @@ export default {
         this.nodes.push({
           id: this.nodeIndex++,
           name: `[1] ${label}`,
-          _color: 'cyan',
+          _color: '#64B5F6',
           level: 1,
-          url: label !== 'etc.' ? data.curr_url : label,
+          founder: data.user_email,
+          currURL: label !== 'etc.' ? data.curr_url : label,
           paths: label !== 'etc.' ? data.paths : null,
           keyword: label !== 'etc.' ? data.keyword : '',
           subKeyword: label !== 'etc.' ? data.sub_keyword : '',
           tagged: label !== 'etc.' ? data.tagged : '',
           memo: label !== 'etc.' ? data.memo : '',
+          visitRate: data.visit_rate ? data.visit_rate : 0,
+          relativeKeywordList: data.relativeKeywordList ? data.relativeKeywordList : [],
+          pageContents: data.pageContents ? data.pageContents : []
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -399,10 +578,38 @@ export default {
     addNodesAndLinks (data) {
       var joinedURL = data.paths.join('')
       var duplicatedLinkTid = -1
+      var prevNode
+      var prevNodeURL = data.prev_url
+
+      // 부모 노드 검색
+      // 구글 검색 결과의 URL이 .com으로 끝나거나 .co.kr로 끝나는 경우가 있으므로
+      // 해당 URL에서 검색어만 추출하여 일치하는지 검사
+      if (prevNodeURL.indexOf('www.' + SEARCH_ENG) !== -1 && prevNodeURL.indexOf('/search?') !== -1) {
+        var parsedQuery = queryParser.parse(prevNodeURL)
+
+        // 부모 노드의 검색어와 현재 노드의 URL 내 검색 쿼리가 일치하는 노드 찾기
+        prevNode = this.nodes.find(node => {
+          if (node.paths) {
+            return node.paths[1] === parsedQuery.q
+          } else {
+            // 레벨 0인 노드는 paths 속성이 존재하지 않으므로 검사에서 패스
+            return
+          }
+        })
+      } else {
+        // 부모 노드 검색 결과가 여러 개일 경우, 본인이 찾은 노드를 부모 노드로 선정
+        var prevNodes = this.nodes.filter(node => node.currURL === prevNodeURL)
+
+        if (prevNodes.length > 1) {
+          prevNode = prevNodes.find(node => node.founder === this.decoded.email)
+        } else if (prevNodes.length === 1) {
+          prevNode = prevNodes[0]
+        }
+      }
 
       // 각 노드들과 비교하여 중복되는 이름의 노드가 존재하는지 검사
       var duplicatedNode = this.nodes.find(node => {
-        return node.url === data.curr_url
+        return node.currURL === data.curr_url
       })
 
       // 중복된 노드가 있는 경우 간선까지 중복되는지 검사
@@ -410,57 +617,31 @@ export default {
         var link = this.links.find(x => {
           return x.tid === duplicatedNode.id
         })
-        if (link.sid === data.parent_id) {
+        // if (link.sid === data.parent_id) {
+        if (link.sid === prevNode.id) {
           duplicatedLinkTid = link.tid
         }
       }
 
       if (duplicatedLinkTid === -1) {
         // 간선은 중복되지 않은 경우
-
-        // 노드 이름 작명 함수
-        var nodeNameConvention = (paths, url) => {
-          var decodedURL = decodeURI(url)
-          var decodedPaths = []
-          var nodeName = []
-
-          // paths 배열 URL 요소 디코딩
-          for (var path of paths) {
-            decodedPaths.push(decodeURI(path))
-          }
-
-          // URL 길이가 50자가 넘는지 검사
-          if (decodedURL.length > 50) {
-            nodeName.push(decodedPaths[0])
-
-            // paths 배열 요소가 1개를 넘으면 '/...' 문자열 추가
-            if (decodedPaths.length > 1) {
-              nodeName.push('/...')
-
-              // '/...' 문자열을 포함한 URL 전체가 50자를 넘지 않으면 가장 마지막 path 문자열 추가
-              if (nodeName.join('').length <= 50) {
-                nodeName.push(decodedPaths[decodedPaths.length - 1])
-              }
-            }
-          } else {
-            // URL 길이가 50자를 넘지 않는다면 있는 그대로 표시
-            nodeName.push(decodedURL)
-          }
-
-          return nodeName.join('')
-        };
-
+        
         // 노드 생성
         this.nodes.push({
           id: this.nodeIndex++,
-          name: `[${data.level}] ${nodeNameConvention(data.paths, joinedURL)}`,
+          name: `[${data.level}] ${this.nodeNameConvention(data.paths, joinedURL)}`,
           level: data.level,
-          url: data.curr_url,
+          founder: data.user_email,
+          prevURL: data.prev_url,
+          currURL: data.curr_url,
           paths: data.paths,
           keyword: data.keyword,
           subKeyword: data.sub_keyword,
           tagged: data.tagged,
-          memo: data.memo
+          memo: data.memo,
+          visitRate: data.visit_rate ? data.visit_rate : 0,
+          relativeKeywordList: data.relativeKeywordList ? data.relativeKeywordList : [],
+          pageContents: data.pageContents ? data.pageContents : []
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -472,11 +653,43 @@ export default {
         )
 
         // 간선 연결
-        var sid = data.parent_id
+        // var sid = data.parent_id
+        var sid = prevNode.id
         var tid = this.nodeIndex - 1
         this.links.push({ sid, tid })
         console.log('Link created : ' + sid + ' -> ' + tid)
       }
+    },
+    // 노드 이름 작명 함수
+    nodeNameConvention (paths, url) {
+      var decodedURL = decodeURI(url)
+      var decodedPaths = []
+      var nodeName = []
+
+      // paths 배열 URL 요소 디코딩
+      for (var path of paths) {
+        decodedPaths.push(decodeURI(path))
+      }
+
+      // URL 길이가 50자가 넘는지 검사
+      if (decodedURL.length > 50) {
+        nodeName.push(decodedPaths[0])
+
+        // paths 배열 요소가 1개를 넘으면 '/...' 문자열 추가
+        if (decodedPaths.length > 1) {
+          nodeName.push('/...')
+
+          // '/...' 문자열을 포함한 URL 전체가 50자를 넘지 않으면 가장 마지막 path 문자열 추가
+          if (nodeName.join('').length <= 50) {
+            nodeName.push(decodedPaths[decodedPaths.length - 1])
+          }
+        }
+      } else {
+        // URL 길이가 50자를 넘지 않는다면 있는 그대로 표시
+        nodeName.push(decodedURL)
+      }
+
+      return nodeName.join('')
     },
     // 노드 클릭 시 이벤트
     nodeClick (event, node) {
@@ -498,8 +711,8 @@ export default {
       this.pinnedNode.level = node.level
       this.pinnedNode.paths = node.paths
       this.pinnedNode.url =
-        node.url !== 'etc.'
-          ? decodeURI(node.url)
+        node.currURL !== 'etc.'
+          ? decodeURI(node.currURL)
           : 'Google 검색 결과 페이지를 거치지 않고 접속한 페이지들이 하위 노드로 생성됩니다.';
       this.pinnedNode.name = {
         host:
@@ -512,6 +725,9 @@ export default {
       this.pinnedNode.keyword.sub = node.subKeyword
       this.pinnedNode.tagged = node.tagged
       this.pinnedNode.memo = node.memo
+      this.pinnedNode.visitRate = node.visitRate
+      this.pinnedNode.relativeKeywordList = node.relativeKeywordList
+      this.pinnedNode.pageContents = node.pageContents
     },
     // updateSheet () {
     //   this.sheet = !this.sheet
@@ -520,5 +736,6 @@ export default {
 }
 </script>
 
-<style src="vue-d3-network/dist/vue-d3-network.css">
+<style>
+@import '../assets/css/vue-d3-network-dots.css';
 </style>

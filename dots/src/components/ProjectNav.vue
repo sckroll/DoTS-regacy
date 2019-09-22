@@ -7,11 +7,12 @@
       <v-toolbar-title class="headline">
         <span class="font-weight-medium">{{ project.project_name }}</span>
         <span class="font-weight-light"> by {{ project.team_name }}</span>
+        <span v-if="currentMember !== ''">
+          <span class="font-weight-light mx-6">-></span>
+          <span class="font-weight-medium">{{ currentMember }}</span>
+          <span class="font-weight-light"> 님의 조사 기록</span>
+        </span>
       </v-toolbar-title>
-      <!-- <v-spacer></v-spacer>
-      <v-toolbar-title class="headline">
-        
-      </v-toolbar-title> -->
     </v-app-bar>
 
     <v-content>
@@ -35,7 +36,8 @@ export default {
   data: () => ({
     drawer: false,
     isLoaded: false,
-    project: {}
+    project: {},
+    currentMember: ''
   }),
   created () {
     this.$http
@@ -51,6 +53,15 @@ export default {
       .catch(err => {
         console.log(err)
       })
+  },
+  mounted() {
+    this.EventBus.$on('sendMemberName', payload => {
+      if(!payload.memberFirstName && !payload.memberLastName) {
+        this.currentMember = ''
+      } else {
+        this.currentMember = payload.memberFirstName + ' ' + payload.memberLastName
+      }
+    })
   },
   methods: {
     updateDrawer () {

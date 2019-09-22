@@ -11,7 +11,12 @@ var Data = {}
 const SEARCH_ENG = 'google'
 
 router.get('/', function(req, res, next) {
-	Data = mongoose.model('CrawledData', schema, `${req.query.name}_before_data`)
+	if (req.query.memberEmail) {
+		Data = mongoose.model('CrawledData', schema, `${req.query.name}_${req.query.memberEmail}`)
+	} else {
+		// after_data로 수정할 것
+		Data = mongoose.model('CrawledData', schema, `${req.query.name}_before_data`)
+	}
 
 	Data.findAll()
 		.then(result => {
@@ -25,7 +30,8 @@ router.get('/', function(req, res, next) {
 router.post('/tag', function(req, res, next) {
 	console.log(req.body)
 	
-	Data.findOneByUrl(req.body.currURL)
+	// Data.findOneByUrl(req.body.currURL)
+	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL })
 		.then(result => {
 			if (result) {
 				var newUserData = result
@@ -54,7 +60,8 @@ router.post('/tag', function(req, res, next) {
 router.post('/memo', function(req, res, next) {
 	console.log(req.body)
 
-	Data.findOneByUrl(req.body.currURL)
+	// Data.findOneByUrl(req.body.currURL)
+	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL })
 		.then(result => {
 			if (result) {
 				var newUserData = result
@@ -81,7 +88,7 @@ router.post('/add', function(req, res, next) {
 	var hostname = parsedUrl.hostname
 	var paths = [hostname]
 	var level
-	var parentId = req.body.parentId
+	// var parentId = req.body.parentId
 	
 	// 우선 호스트 주소가 타당한지 검사
 	var isCrawlable = true
@@ -131,7 +138,7 @@ router.post('/add', function(req, res, next) {
 		// 	prev_url: req.body.prevURL,
 		// 	curr_url: req.body.currURL,
 		// 	level,
-		// 	parent_id: parentId,
+		// // 	parent_id: parentId,
 		// 	paths,
 		//  memo: ''
 		// }
@@ -140,7 +147,7 @@ router.post('/add', function(req, res, next) {
 		// 	.then((result) => {
 		// 		res.send(result)
 		// 	}).catch((err) => {
-		// 		throw err
+		// 		res.send(err)
 		// 	});
 
 		// var pythonShell = require('python-shell');
@@ -161,7 +168,9 @@ router.post('/add', function(req, res, next) {
 		// 	res.send(result)
 		// });
 
-		Data.findOneByUrl(req.body.currURL)
+		Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_before_data`)
+		// Data.findOneByUrl(req.body.currURL)
+		Data.findOne({ user_email: req.body.userEmail, curr_url: req.body.currURL })
 			.then(result => {
 				if (!result) {
 					console.log(parsedUrl)
@@ -175,11 +184,15 @@ router.post('/add', function(req, res, next) {
 						prev_url: req.body.prevURL,
 						curr_url: req.body.currURL,
 						level,
-						parent_id: parentId,
+						// parent_id: parentId,
 						paths,
 						memo: ''
 					})
 					Data.create(newUserData)
+						.then(result => {
+							Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_${req.body.userEmail}`)
+							Data.create(newUserData)
+						})
 						.then(result => {
 							res.send(result)
 						})
@@ -210,7 +223,7 @@ router.delete('/', function(req, res, next) {
 
 router.delete('/:name', function(req, res, next) {
 	mongoose.connection
-		.dropCollection(`${req.params.name}_before_data`)
+		.dropCollection(`${req.params.name}`)
 		.then(result => {
 			res.send(result)
 		})
