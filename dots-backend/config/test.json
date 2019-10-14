@@ -1,0 +1,226 @@
+[
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://www.google.com/search?q=4%EC%B0%A8%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85&oq=4%EC%B0%A8%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85&aqs=chrome.0.0l5j69i61.3965j0j7&sourceid=chrome&ie=UTF-8", 
+        "prev_url" : "https://www.google.com/", 
+        "paths" : [
+            "www.google.com", 
+            "4차 산업혁명"
+        ], 
+        "level" : 1, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://brunch.co.kr/@jooshine/36", 
+        "prev_url" : "https://www.google.com/search?q=4%EC%B0%A8%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85&oq=4%EC%B0%A8%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85&aqs=chrome.0.0l5j69i61.3965j0j7&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "brunch.co.kr", 
+            "/@jooshine",
+            "/36"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "http://magazine.contenta.co/2017/12/2%EB%B6%84%EC%95%88%EC%97%90-%EB%B3%B4%EB%8A%94-4%EC%B0%A8-%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85-%EC%99%84%EB%B2%BD-%EC%A0%95%EB%A6%AC/", 
+        "prev_url" : "https://www.google.com/search?q=4%EC%B0%A8%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85&oq=4%EC%B0%A8%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85&aqs=chrome.0.0l5j69i61.3965j0j7&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "magazine.contenta.co", 
+            "/2017",
+            "/12",
+            "/2%EB%B6%84%EC%95%88%EC%97%90-%EB%B3%B4%EB%8A%94-4%EC%B0%A8-%EC%82%B0%EC%97%85%ED%98%81%EB%AA%85-%EC%99%84%EB%B2%BD-%EC%A0%95%EB%A6%AC"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://www.google.com/search?q=%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5&oq=%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5&aqs=chrome..69i57j0l4j69i61.3400j0j7&sourceid=chrome&ie=UTF-8", 
+        "prev_url" : "https://www.google.com/", 
+        "paths" : [
+            "www.google.com", 
+            "인공지능"
+        ], 
+        "level" : 1, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://ko.wikipedia.org/wiki/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5", 
+        "prev_url" : "https://www.google.com/search?q=%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5&oq=%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5&aqs=chrome..69i57j0l4j69i61.3400j0j7&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "ko.wikipedia.org", 
+            "/wiki",
+            "/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://skymind.ai/kr/wiki/ai-vs-machine-learning-vs-deep-learning", 
+        "prev_url" : "https://www.google.com/search?q=%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5&oq=%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5&aqs=chrome..69i57j0l4j69i61.3400j0j7&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "skymind.ai", 
+            "/kr",
+            "/wiki",
+            "/ai-vs-machine-learning-vs-deep-learning"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://www.google.com/search?q=%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90&oq=%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90&aqs=chrome..69i57j0l4j69i60.1814j0j4&sourceid=chrome&ie=UTF-8", 
+        "prev_url" : "https://www.google.com/", 
+        "paths" : [
+            "www.google.com", 
+            "가상화폐"
+        ], 
+        "level" : 1, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://banksalad.com/contents/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90-%EA%B0%9C%EB%85%90-%EC%99%84%EB%B2%BD-%EC%A0%95%EB%A6%AC-A-to-Z-1%EB%B6%80-WYTtp", 
+        "prev_url" : "https://www.google.com/search?q=%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90&oq=%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90&aqs=chrome..69i57j0l4j69i60.1814j0j4&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "banksalad.com", 
+            "/contents",
+            "/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90-%EA%B0%9C%EB%85%90-%EC%99%84%EB%B2%BD-%EC%A0%95%EB%A6%AC-A-to-Z-1%EB%B6%80-WYTtp"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://banksalad.com/contents/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90-%EA%B1%B0%EB%9E%98%EC%86%8C-%EB%B9%84%EA%B5%90%EB%B6%84%EC%84%9D-7BYW3", 
+        "prev_url" : "https://banksalad.com/contents/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90-%EA%B0%9C%EB%85%90-%EC%99%84%EB%B2%BD-%EC%A0%95%EB%A6%AC-A-to-Z-1%EB%B6%80-WYTtp", 
+        "paths" : [
+            "banksalad.com", 
+            "/contents",
+            "/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90-%EA%B1%B0%EB%9E%98%EC%86%8C-%EB%B9%84%EA%B5%90%EB%B6%84%EC%84%9D-7BYW3"
+        ], 
+        "level" : 3, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://ko.wikipedia.org/wiki/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90", 
+        "prev_url" : "https://www.google.com/search?q=%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90&oq=%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90&aqs=chrome..69i57j0l4j69i60.1814j0j4&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "ko.wikipedia.org", 
+            "/wiki",
+            "/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://ko.wikipedia.org/wiki/%EB%B8%94%EB%A1%9D%EC%B2%B4%EC%9D%B8", 
+        "prev_url" : "https://ko.wikipedia.org/wiki/%EA%B0%80%EC%83%81%ED%99%94%ED%8F%90", 
+        "paths" : [
+            "ko.wikipedia.org", 
+            "/wiki",
+            "/%EB%B8%94%EB%A1%9D%EC%B2%B4%EC%9D%B8"
+        ], 
+        "level" : 3, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://www.google.com/search?q=%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4&oq=%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4&aqs=chrome..69i57j0l3j69i60j69i61.1830j0j4&sourceid=chrome&ie=UTF-8", 
+        "prev_url" : "https://www.google.com/", 
+        "paths" : [
+            "www.google.com", 
+            "증강현실"
+        ], 
+        "level" : 1, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://ettrends.etri.re.kr/ettrends/164/0905002196/", 
+        "prev_url" : "https://www.google.com/search?q=%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4&oq=%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4&aqs=chrome..69i57j0l3j69i60j69i61.1830j0j4&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "ettrends.etri.re.kr", 
+            "/ettrends",
+            "/164",
+            "/0905002196"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://ko.wikipedia.org/wiki/%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4", 
+        "prev_url" : "https://www.google.com/search?q=%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4&oq=%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4&aqs=chrome..69i57j0l3j69i60j69i61.1830j0j4&sourceid=chrome&ie=UTF-8", 
+        "paths" : [
+            "ko.wikipedia.org", 
+            "/wiki",
+            "/%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4"
+        ], 
+        "level" : 2, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    },
+    {
+        "user_name" : "Myunghwa Ji", 
+        "user_email" : "jmh@example.com", 
+        "curr_url" : "https://ko.wikipedia.org/wiki/%EA%B0%80%EC%83%81%ED%98%84%EC%8B%A4", 
+        "prev_url" : "https://ko.wikipedia.org/wiki/%EC%A6%9D%EA%B0%95%ED%98%84%EC%8B%A4", 
+        "paths" : [
+            "ko.wikipedia.org", 
+            "/wiki",
+            "/%EA%B0%80%EC%83%81%ED%98%84%EC%8B%A4"
+        ], 
+        "level" : 3, 
+        "memo" : "",
+        "tagged" : "False",
+        "project_name" : "시연용 프로젝트"
+    }
+]

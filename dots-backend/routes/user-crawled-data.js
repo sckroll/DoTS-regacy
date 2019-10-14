@@ -5,6 +5,9 @@ const router = express.Router()
 // const Data = require('../models/crawled-data')
 const schema = require('../models/crawled-data')
 
+const serverURL = process.env.NODE_ENV === 'production' ? 'https://dots-crawler-dot-dots-00.appspot.com' : 'http://localhost:5000'
+// const serverURL = 'https://dots-crawler-dot-dots-00.appspot.com'
+
 var Data = {}
 
 // 사용할 검색 엔진
@@ -14,11 +17,12 @@ router.get('/', function(req, res, next) {
 	if (req.query.memberEmail) {
 		Data = mongoose.model('CrawledData', schema, `${req.query.name}_${req.query.memberEmail}`)
 	} else {
-		// after_data로 수정할 것
-		Data = mongoose.model('CrawledData', schema, `${req.query.name}_before_data`)
+		// Data = mongoose.model('CrawledData', schema, `${req.query.name}_before_data`)
+		Data = mongoose.model('CrawledData', schema, `${req.query.name}_after_data`)
 	}
 
-	Data.findAll()
+	// Data.findAll()
+	Data.find({}, '-screenshot')
 		.then(result => {
 			res.send(result)
 		})
@@ -27,27 +31,109 @@ router.get('/', function(req, res, next) {
 		})
 })
 
+router.get('/stop', function(req, res, next) {
+	// Flask 서버로 크롤링 중단 신호를 보내고 통합 컬렉션으로부터 데이터 불러오기
+	axios.get(serverURL + '/stop', { params: { project_name: req.query.name } })
+		.then(result => {
+			Data = mongoose.model('CrawledData', schema, `${req.query.name}_after_data`)
+			Data.findAll()
+		}).then(result => {
+			res.send(result)
+		}).catch(err => {
+			throw err
+		});
+})
+
+router.get('/origin', function(req, res, next) {
+	Data = mongoose.model('CrawledData', schema, `${req.query.name}_after_data`)
+	Data.findOne({ 'user_email': req.query.founder, 'curr_url': req.query.currURL }, '-screenshot')
+		.then(result => {
+			node_id = result._id.toString()
+			axios.get(serverURL + '/origin', { params: { project_name: req.query.name, node_id } })
+				.then(resultObj => {
+					// 2개의 오브젝트 ID를 받아 각각 노드를 검색 후 배열로 반환하는 방법
+					Promise.all(
+						resultObj.data.node_list.map(id => {
+							return new Promise(response => {
+								Data.findOne({ _id: id }, 'user_email curr_url')
+								.then(node => {
+									// response(node)
+									response({ founder: node.user_email, curr_url: node.curr_url })
+								}).catch(err => {
+									throw err
+								});
+							})
+						})
+					).then(nodes => {
+						res.send(nodes)
+					})
+				}).catch(err => {
+					throw err
+				});
+		}).catch(err => {
+			throw err
+		});
+})
+
+router.get('/recommend', function(req, res, next) {
+	axios.get(serverURL + '/recommend', { params: { project_name: req.query.name } })
+		.then(resultObj => {
+			// 여러 개의 오브젝트 ID를 받아 각각 노드를 검색 후 배열로 반환하는 방법
+			Promise.all(
+				resultObj.data.node_list.map(id => {
+					return new Promise(response => {
+						Data.findOne({ _id: id }, 'user_email curr_url')
+						.then(node => {
+							// response(node)
+							response({ founder: node.user_email, curr_url: node.curr_url })
+						}).catch(err => {
+							throw err
+						});
+					})
+				})
+			).then(nodes => {
+				res.send(nodes)
+			})
+		}).catch(err => {
+			throw err
+		});
+})
+
 router.post('/tag', function(req, res, next) {
 	console.log(req.body)
-	
+
 	// Data.findOneByUrl(req.body.currURL)
-	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL })
+	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL }, '-screenshot')
 		.then(result => {
 			if (result) {
-				var newUserData = result
-				if (newUserData.tagged.indexOf(req.body.email) === -1) {
-					newUserData.tagged.push(req.body.email)
+				// var newUserData = result
+				// var isTagged
+				// if (newUserData.tagged.indexOf(req.body.email) === -1) {
+				// 	isTagged = true
+				// 	newUserData.tagged.push(req.body.email)
 
-					Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
-						if (err) {
-							res.json({error: '태그 표시 중에 오류가 발생하였습니다.'})
-						} else {
-							res.send(doc)
-						}
-					})
-				} else {
-					res.json({error: '이미 현재 페이지에 대해 태그를 표시하셨습니다.'})
-				}
+				// 	Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
+				// 		if (err) {
+				// 			res.json({error: '태그 표시 중에 오류가 발생하였습니다.'})
+				// 		} else {
+				// 			res.send(doc)
+				// 		}
+				// 	})
+				// } else {
+				// 	isTagged = false
+				// 	res.json({error: '이미 현재 페이지에 대해 태그를 표시하셨습니다.'})
+				// }
+
+				// 도큐먼트 ID, 태그 여부 전달
+				axios.post(serverURL + '/tag', {
+					project_name: req.body.projectName,
+					_id: result._id,
+					tagged: isTagged
+				}).then(response => {
+					res.send(response)
+				}).catch(err => {
+					res.json({ error: '태그 표시 중에 오류가 발생하였습니다.' })
+				});
 			} else {
 				res.json({ error: '현재 페이지에 대해 크롤링을 수행한 기록이 없습니다. 먼저 DoTS 홈페이지에서 크롤링을 시작해주세요' })
 			}
@@ -64,16 +150,27 @@ router.post('/memo', function(req, res, next) {
 	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL })
 		.then(result => {
 			if (result) {
-				var newUserData = result
-				newUserData.memo = req.body.memo
+				// var newUserData = result
+				// newUserData.memo = req.body.memo
 
-				Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
-					if (err) {
-						res.json({error: '메모 저장에 오류가 발생하였습니다.'})
-					} else {
-						res.send(doc)
-					}
-				})
+				// Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
+				// 	if (err) {
+				// 		res.json({error: '메모 저장에 오류가 발생하였습니다.'})
+				// 	} else {
+				// 		res.send(doc)
+				// 	}
+				// })
+
+				// 도큐먼트 ID, 메모 전달
+				axios.post(serverURL + '/memo', {
+					project_name: req.body.projectName,
+					_id: result._id,
+					memo: req.body.memo
+				}).then(response => {
+					res.send(response)
+				}).catch(err => {
+					res.json({ error: '메모 저장에 오류가 발생하였습니다.' })
+				});
 			} else {
 				res.json({ error: '현재 페이지에 대해 크롤링을 수행한 기록이 없습니다. 먼저 DoTS 홈페이지에서 크롤링을 시작해주세요' })
 			}
@@ -88,7 +185,6 @@ router.post('/add', function(req, res, next) {
 	var hostname = parsedUrl.hostname
 	var paths = [hostname]
 	var level
-	// var parentId = req.body.parentId
 	
 	// 우선 호스트 주소가 타당한지 검사
 	var isCrawlable = true
@@ -131,87 +227,98 @@ router.post('/add', function(req, res, next) {
 		// 이 부분에서 파이썬(Selenium) 연동
 
 		// selenium 실행을 위해 JSON으로 묶어서 인수로 전달
-		// const newUserData = {
-		// 	user_email: req.body.userEmail,
-		// 	user_name: req.body.userName,
-		// 	tagged: [],
-		// 	prev_url: req.body.prevURL,
-		// 	curr_url: req.body.currURL,
-		// 	level,
-		// // 	parent_id: parentId,
-		// 	paths,
-		//  memo: ''
-		// }
+		const newUserData = {
+			project_name: req.body.projectName,
+			user_email: req.body.userEmail,
+			user_name: req.body.userName,
+			// tagged: [],
+			tagged: "False",
+			prev_url: req.body.prevURL,
+			curr_url: req.body.currURL,
+			level,
+			paths,
+			memo: ''
+		}
 
-		// axios.post('PYTHON 서버 URL', newUserData)
+		// // 사용자 DB에 저장하기 위해 Flask 서버로 전달
+		// axios.post(serverURL + '/crawled-data', newUserData)
 		// 	.then((result) => {
+		// 		Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_${req.body.userEmail}`)
+		// 		// Data.findAll()
+		// 		Data.find({}, '-screenshot')
+		// 	}).then((result) => {
 		// 		res.send(result)
 		// 	}).catch((err) => {
 		// 		res.send(err)
 		// 	});
 
-		// var pythonShell = require('python-shell');
-		// var file = '../../JMH/Selenium/search.py';
-		// var options = {
-		// 	mode: 'json',
-		// 	pythonPath: 'python',
-		// 	pythonOptions: ['-u'],
-		// 	scriptPath: '',
-		// 	encoding: 'utf8',
-		// 	args: [newUserData]
-		// };
-
-		// pythonShell.PythonShell.run(file, options, function(err, result) {
-		// 	if(err) throw err;
-
-		// 	console.log(result);
-		// 	res.send(result)
-		// });
-
-		Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_before_data`)
-		// Data.findOneByUrl(req.body.currURL)
-		Data.findOne({ user_email: req.body.userEmail, curr_url: req.body.currURL })
+		Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_${req.body.userEmail}`)
+		Data.findOne({ user_email: req.body.userEmail, curr_url: req.body.currURL }, '-screenshot')
 			.then(result => {
-				if (!result) {
-					console.log(parsedUrl)
-
-					var newUserData = new Data({
-						user_email: req.body.userEmail,
-						user_name: req.body.userName,
-						keyword: 'mainKeyword',
-						sub_keyword: ['subKeyword1', 'subKeyword2'],
-						tagged: [],
-						prev_url: req.body.prevURL,
-						curr_url: req.body.currURL,
-						level,
-						// parent_id: parentId,
-						paths,
-						memo: ''
-					})
-					Data.create(newUserData)
-						.then(result => {
-							Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_${req.body.userEmail}`)
-							Data.create(newUserData)
-						})
-						.then(result => {
-							res.send(result)
-						})
-						.catch(err => {
-							res.send(err)
-						})
-				} else {
+				if (result) {
 					res.send(result)
+				} else {
+					axios.post(serverURL + '/crawled-data', newUserData)			
+						.then(response => {
+							Data.findOne({ user_email: req.body.userEmail, curr_url: req.body.currURL }, '-screenshot')
+								.then((resultData) => {
+									res.send(resultData)
+								}).catch((err) => {
+									res.send(err)
+								});
+						}).catch(err => {
+							res.send(err)
+						});
 				}
-			})
-			.catch(err => {
-				throw err
-			})
+			}).catch(err => {
+				res.send(err)
+			});
+
+		// Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_before_data`)
+		// // Data.findOneByUrl(req.body.currURL)
+		// Data.findOne({ user_email: req.body.userEmail, curr_url: req.body.currURL })
+		// 	.then(result => {
+		// 		if (!result) {
+		// 			console.log(parsedUrl)
+
+		// 			var newUserData = new Data({
+		// 				project_name: req.body.projectName,
+		// 				user_email: req.body.userEmail,
+		// 				user_name: req.body.userName,
+		// 				keyword: 'mainKeyword',
+		// 				sub_keyword: ['subKeyword1', 'subKeyword2'],
+		// 				tagged: [],
+		// 				prev_url: req.body.prevURL,
+		// 				curr_url: req.body.currURL,
+		// 				level,
+		// 				paths,
+		// 				memo: ''
+		// 			})
+		// 			Data.create(newUserData)
+		// 				.then(result => {
+		// 					Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_${req.body.userEmail}`)
+		// 					Data.create(newUserData)
+		// 				})
+		// 				.then(result => {
+		// 					res.send(result)
+		// 				})
+		// 				.catch(err => {
+		// 					res.send(err)
+		// 				})
+		// 		} else {
+		// 			res.send(result)
+		// 		}
+		// 	})
+		// 	.catch(err => {
+		// 		throw err
+		// 	})
 	} else {
 		res.send({ notUrl: true, isMainPage, level, paths })
 	}
 })
 
 router.delete('/', function(req, res, next) {
+	// Data = mongoose.model('CrawledData', schema, `${req.body.name}_${req.body.email}`)
 	Data.deleteMany({})
 		.then(result => {
 			res.send(result)

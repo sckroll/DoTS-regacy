@@ -11,7 +11,7 @@
           <div v-for="project in projects" :key="project.project_id" class="ma-0">
             <template v-for="member in project.members">
               <v-hover v-if="member.verified && member.email === user.email" v-slot:default="{ hover }" :key="member.email">
-                <v-card width="400" min-height="300" class="ma-2" tile :elevation="hover ? 12 : 2">
+                <v-card width="350" min-height="300" class="ma-2" tile :elevation="hover ? 12 : 2">
                   <v-img
                     class="white--text"
                     height="200px"
@@ -51,7 +51,7 @@
 
           <v-hover v-slot:default="{ hover }">
             <v-card
-              width="400"
+              width="350"
               min-height="300"
               class="ma-2 d-flex text-center align-center"
               tile
@@ -140,7 +140,7 @@ export default {
       if (this.currentProject === this.confirmStr) {
         // 프로젝트 통합 컬렉션 삭제
         this.$http
-          .delete(`/data/${this.currentProject}_before_data`)
+          .delete(`/data/${this.currentProject}_after_data`)
           .then(result => {})
           .catch(err => {
             console.log(err)

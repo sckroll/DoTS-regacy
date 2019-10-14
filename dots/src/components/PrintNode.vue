@@ -28,7 +28,7 @@
       <!-- 기능 버튼 -->
       <v-tooltip v-for="nodeFunction in nodeFunctions" :key="nodeFunction.name" bottom transition="fade-transition">
         <template v-slot:activator="{ on }">
-          <v-avatar :disabled="isCrawlingStarted" :color="isCrawlingStarted ? 'grey darken-1' : 'blue darken-3'" v-on="on" size="40" class="mr-4" style="cursor: pointer;" v-ripple @click="nodeFunction.func">
+          <v-avatar :disabled="isCrawlingStarted" :color="isCrawlingStarted || currMember !== '' === '' ? 'grey darken-1' : 'blue darken-3'" v-on="on" size="40" class="mr-4" style="cursor: pointer;" v-ripple @click="nodeFunction.func">
             <v-icon>{{ nodeFunction.icon }}</v-icon>
           </v-avatar>
         </template>
@@ -56,7 +56,7 @@
       <!-- 크롤링 시작 버튼 -->
       <v-tooltip v-if="!isCrawlingStarted" bottom transition="fade-transition">
         <template v-slot:activator="{ on }">
-          <v-avatar :disabled="currMember === ''" color="success" v-on="on" size="40" style="cursor: pointer;" v-ripple @click="startCrawling">
+          <v-avatar :disabled="currMember !== ''" :color="currMember !== '' ? 'grey darken-1' : 'success'" v-on="on" size="40" style="cursor: pointer;" v-ripple @click="startCrawling">
             <v-icon>mdi-play</v-icon>
           </v-avatar>
         </template>
@@ -71,7 +71,6 @@
         <span>크롤링 중지</span>
       </v-tooltip>
     </v-app-bar>
-
 
     <v-layout justify-center class="d3-canvas">
       <d3-network
@@ -88,7 +87,7 @@
           <div class="display-1 white--text">{{ pinnedNode.name.host }}</div>
           <div class="headline grey--text text--lighten-1">{{ pinnedNode.name.rest }}</div>
         </v-sheet>
-        <v-sheet class="px-6 py-2" tile color="blue darken-3">
+        <v-sheet class="pa-6" tile color="blue darken-3">
           <div class="title-1 font-weight-light grey--text text--lighten-2">{{ pinnedNode.url }}</div>
         </v-sheet>
         <v-sheet class="pa-6" tile color="blue lighten-2">
@@ -106,7 +105,12 @@
               </v-sheet>
             </v-col>
             <v-col cols="6">
-              <v-sheet v-if="pinnedNode.tagged.length > 0" tile color="blue lighten-2" class="headline">
+              <v-sheet v-if="pinnedNode.tagged" tile color="blue lighten-2" class="headline">
+                <span class="font-weight-light">태그 표시 여부:</span>
+                <span v-if="pinnedNode.tagged[0] === 'True'" class="font-weight-bold ml-2 green--text text--darken-2">TRUE</span>
+                <span v-else class="font-weight-bold ml-2 red--text text--darken-3">FALSE</span>
+              </v-sheet>
+              <!-- <v-sheet v-if="pinnedNode.tagged.length > 0" tile color="blue lighten-2" class="headline">
                 <span class="font-weight-light">태그 표시한 팀원:</span>
                 <span
                   v-for="member in project.members"
@@ -123,24 +127,41 @@
               <v-sheet v-else tile color="blue lighten-2" class="headline">
                 <span class="font-weight-light">태그 표시한 팀원:</span>
                 <span class="font-weight-medium ml-2">없음</span>
-              </v-sheet>
+              </v-sheet> -->
             </v-col>
           </v-row>
         </v-sheet>
         <v-sheet v-if="pinnedNode.id !== 1" class="pa-6" tile>
-          <div class="headline">
-            <span class="font-weight-medium">{{ pinnedNode.keyword.main }}</span>
-            <span
-              v-for="(subKeyword, index) in pinnedNode.keyword.sub"
-              :key="index"
-              class="font-weight-light"
-            >, {{ subKeyword }}</span>
+          <div class="headline font-weight-medium">
+            <span v-if="pinnedNode.level > 1">{{ pinnedNode.keyword.main }}</span>
+            <span v-else>연관 검색어</span>
+          </div>
+          <div class="title font-weight-light">
+            <div v-if="pinnedNode.level > 1" class="ma-0">
+              <span
+                v-for="(subKeyword, index) in pinnedNode.keyword.sub"
+                :key="index"
+              >{{ subKeyword }}<span v-if="index !== pinnedNode.keyword.sub.length - 1">, </span></span>
+            </div>
+            <div v-else class="ma-0">
+              <span
+                v-for="(keyword, index) in pinnedNode.relativeKeywordList"
+                :key="index"
+              >{{ keyword }}<span v-if="index !== pinnedNode.relativeKeywordList.length - 1">, </span></span>
+            </div>
           </div>
         </v-sheet>
+        <v-sheet v-if="pinnedNode.level > 1" class="pa-6" tile dark color="grey darken-2">
+          <div
+            v-for="(content, index) in pinnedNode.pageContents"
+            :key="index"
+            class="subtitle-2 font-weight-light"
+          >{{ content.length > 50 ? content.substr(0, 49).concat('...') : content }}<br/></div>
+        </v-sheet>
         <v-sheet v-if="pinnedNode.memo !== ''" class="pa-6" tile dark color="grey darken-3">
-            <span class="headline font-weight-medium">MEMO</span>
-            <br>
-            <span class="title font-weight-light">{{ pinnedNode.memo }}</span>
+          <span class="headline font-weight-medium">MEMO</span>
+          <br>
+          <span class="title font-weight-light">{{ pinnedNode.memo }}</span>
         </v-sheet>
       </v-bottom-sheet>
       <!-- <node-detail-sheet :pinnedNode="pinnedNode" :project="project" :sheet="sheet" @update="updateSheet"></node-detail-sheet> -->
@@ -173,7 +194,6 @@ export default {
       prevURL: '',
       currURL: '',
       prevQuery: '',
-      urlTextField: '',
       sheet: false,
       totalData: [],
       crawledData: {},
@@ -188,6 +208,8 @@ export default {
       intervalFunc: 0,
       isCrawlingStarted: false,
       currMember: '',
+      visitRateThreshold: 0.5,
+      optimizedNodes: [],
       pinnedNode: {
         id: 0,
         name: {
@@ -201,19 +223,19 @@ export default {
           main: '',
           sub: []
         },
-        tagged: [],
+        tagged: '',
         memo: ''
       },
       nodeFunctions: [
         {
+          name: '파생 키워드 및 노드를 표시하려면 Shift 키를 누른 상태에서 노드를 클릭해주세요.',
+          icon: 'mdi-link-variant',
+          func: function() { }
+        },
+        {
           name: '태그 표시된 노드 표시',
           icon: 'mdi-tag-multiple',
           func: this.getTaggedNodes
-        },
-        {
-          name: '연관성 높은 노드 표시',
-          icon: 'mdi-link-variant',
-          func: this.getRelevantNodes
         },
         {
           name: '다수 / 소수 구별',
@@ -278,56 +300,78 @@ export default {
     this.options.size.w = this.canvasWidth
     this.options.size.h = this.canvasHeight
 
-    // // 로컬 저장소 값이 변경되었을 때 발생하는 이벤트
-    // // https://www.experts-exchange.com/questions/29143892/How-to-Set-JavaScript-Event-Listener-on-Local-Storage-Value-in-Same-Window.html
-    // window.addEventListener('storagechange', function(e) {
-    //   if (e.detail.type == 'set') {
-    //     console.log('LocalStorage value ' + e.detail.key + ' set to ' + e.detail.value);
+    window.addEventListener('message', e => {
+      if (e.source != window) return
+      
+      if (e.data.type && (e.data.type == "getCrawledData")) {
+        if (this.isCrawlingStarted) {
+          console.log("Received prevURL: " + e.data.prevURL)
+          console.log("Received currURL: " + e.data.currURL)
 
-    //     if (e.detail.key === 'currURL') {
-    //       getCrawledData()
-    //       // this.prevURL = localStorage.getItem('prevURL')
-    //     }
-    //   }
-    // });
+          this.getCrawledData(e.data.prevURL, e.data.currURL)
+        }
+      }
+    }, false)
   },
   methods: {
     // 크롤링 시작 함수 (5초마다 크롤링 수행)
     startCrawling () {
       this.isCrawlingStarted = true
-      this.intervalFunc = setInterval(() => {
-        this.getCrawledData()
-      }, 5000)
 
-      window.open('https://www.google.com')
+      this.resetNodes()
+
+      // 현재 팀원의 노드 정보를 서버에 요청
+      this.$http
+        .get('/data', {
+          params: {
+            name: this.project.project_name,
+            memberEmail: this.decoded.email
+          }
+        })
+        .then(result => {
+          this.totalData = result.data
+          if (this.totalData.length > 0) {
+            // 이후의 노드 초기화
+            this.initializeNodes()
+          }
+
+          // this.intervalFunc = setInterval(() => {
+          //   this.getCrawledData()
+          // }, 5000)
+
+          window.open('https://www.google.com')
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
     // 크롤링 중지 함수
     stopCrawling () {
       this.isCrawlingStarted = false
-      clearInterval(this.intervalFunc)
+
+      // clearInterval(this.intervalFunc)
+
+      this.$http
+        .get('/data/stop', { params: { name: this.project.project_name } })
+        .then(result => {
+          this.totalData = result.data
+          if (this.totalData.length > 0) {
+            this.resetNodes()
+
+            // 이후의 노드 초기화
+            this.initializeNodes()
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
     // 자동 크롤링 수행 함수
-    getCrawledData () {
-      this.prevURL = localStorage.getItem('prevURL')
-      this.currURL = localStorage.getItem('currURL')
-
-      // prevURL을 이용하여 부모 노드를 검색
-      // var parentNode = this.nodes.find(node => {
-      //   if (this.prevURL === '') {
-      //     return node.name.split(' ')[1] === 'etc.';
-      //   } else {
-      //     return node.currURL === this.prevURL
-      //   }
-      // })
-
-      // // var parentId = parentNode
-      // //   ? parentNode.id
-      // //   : this.prevURL === ''
-      // //     ? this.nodeIndex
-      // //       : 1
-      // var parentLevel = parentNode
-      //   ? parentNode.level
-      //     : 1
+    getCrawledData (prev, curr) {
+      // this.prevURL = localStorage.getItem('prevURL')
+      // this.currURL = localStorage.getItem('currURL')
+      this.prevURL = prev
+      this.currURL = curr
 
       // 부모 노드 검색 결과가 여러 개일 경우, 본인이 찾은 노드를 부모 노드로 선정
       var parentNodes = this.nodes.filter(node => {
@@ -346,14 +390,7 @@ export default {
         parentNode = parentNodes[0]
       }
 
-      // var parentId = parentNode
-      //   ? parentNode.id
-      //   : this.prevURL === ''
-      //     ? this.nodeIndex
-      //       : 1
-      var parentLevel = parentNode
-        ? parentNode.level
-          : 1
+      var parentLevel = parentNode ? parentNode.level : 1
 
       // axios를 이용, 서버에 값 요청
       this.$http
@@ -363,10 +400,10 @@ export default {
           userName: this.decoded.first_name + ' ' + this.decoded.last_name,
           prevURL: this.prevURL,
           currURL: this.currURL,
-          // parentId,
           parentLevel
         })
         .then(response => {
+          console.log(response)
           if (response.data.notUrl) {
             if (response.data.isMainPage) {
               // Google 메인 페이지인 경우 (DB에 저장되지 않음)
@@ -379,8 +416,10 @@ export default {
           } else {
             this.crawledData = response.data
 
-            // 불러온 데이터로부터 노드 생성 및 추가
-            this.addNodesfromCrawledData(this.crawledData)
+            if (this.crawledData.paths) {
+              // 불러온 데이터로부터 노드 생성 및 추가
+              this.addNodesfromCrawledData(this.crawledData)
+            }
           }
         })
         .catch(err => {
@@ -390,19 +429,19 @@ export default {
     // 모든 노드 삭제
     truncate () {
       if (confirm('모든 노드를 삭제하시겠습니까?')) {
+        // memberEmail = []
+        // for (member in project.members) {
+        //   memberEmail.push(member.email)
+        // }
+
         this.$http
           .delete('/data')
+          // .delete('/data', {
+          //   name: project.project_name,
+          //   email: memberEmail
+          // })
           .then(result => {
-            this.nodes = []
-            this.links = []
-            this.nodeIndex = 0
-            this.urlTextField = '';
-            this.prevURL = '';
-            this.prevQuery = '';
-
-            // 루트 노드, etc. 노드 재생성
-            this.addZeroNode()
-            this.addInitialNodesAndLinks('', 'etc.')
+            this.resetNodes()
 
             alert('모든 노드를 삭제했습니다.')
           })
@@ -410,6 +449,19 @@ export default {
             console.log(err)
           })
       }
+    },
+    // 노드, 간선 삭제 및 초기화 함수
+    resetNodes () {
+      // 노드 초기화
+      this.nodes = []
+      this.links = []
+      this.nodeIndex = 0
+      this.prevURL = '';
+      this.prevQuery = '';
+
+      // 루트 노드, etc. 노드 초기화
+      this.addZeroNode()
+      this.addInitialNodesAndLinks('', 'etc.')
     },
     // 기능 1: 사용자 별로 조사한 URL로 노드 생성
     getMemberCrawledData (memberEmail, memberFirstName, memberLastName) {
@@ -421,17 +473,7 @@ export default {
       // 사용자 컬렉션의 데이터를 얻어 올 경우 기능 및 크롤링 버튼을 비활성화
       this.currMember = memberEmail
 
-      // 노드 초기화
-      this.nodes = []
-      this.links = []
-      this.nodeIndex = 0
-      this.urlTextField = '';
-      this.prevURL = '';
-      this.prevQuery = '';
-
-      // 루트 노드, etc. 노드 초기화
-      this.addZeroNode()
-      this.addInitialNodesAndLinks('', 'etc.')
+      this.resetNodes()
 
       // 노드 정보를 서버에 요청 (팀원 이메일이 빈 문자열이면 통합 컬렉션의 데이터를 불러옴)
       this.$http
@@ -452,26 +494,213 @@ export default {
           console.log(err)
         })
     },
-    // 기능 2: 통합 컬렉션 내 노드를 클릭했을 때 연관 키워드 출력
-    // 플라스크 서버에 요청을 주는 식으로 할 것
-
-    // 기능 3: 사용자들이 태그 표시한 URL로만 노드 생성
+    // 기능 2: 사용자들이 태그 표시한 URL로만 노드 생성
     getTaggedNodes () {
-      alert('getTaggedNodes')
+      if (this.currMember !== '') {
+        alert('사용자 데이터에서는 확인할 수 없습니다.')
+        return
+      }
+
+      this.resetNodes()
+
+      // 노드 정보를 서버에 요청 (팀원 이메일이 빈 문자열이면 통합 컬렉션의 데이터를 불러옴)
+      this.$http
+        .get('/data', {
+          params: {
+            name: this.project.project_name
+          }
+        })
+        .then(result => {
+          this.totalData = result.data
+          if (this.totalData.length > 0) {
+            // 이후의 노드 초기화
+            this.initializeNodes()
+          }
+        }).then(result => {
+          var isTaggedNode = false
+          var deleteNodes = []
+
+          this.nodes.forEach(node => {
+            if (node.tagged) {
+              // 태그 표시가 안 된 노드 발견 시 간선을 새로 연결하고 연결이 안된 모든 노드 삭제
+              if (node.tagged[0] !== "True") {
+                var targetLinks = this.links.filter(link => link.sid === node.id)
+                var sourceLink = this.links.find(link => link.tid === node.id)
+                var currLinkIndex
+
+                console.log(targetLinks)
+                console.log(sourceLink)
+
+                // 기존 간선을 삭제하고 삭제 노드의 부모 노드와 다시 연결
+                targetLinks.forEach(currLink => {
+                  console.log(currLink.source.name + ' -X- ' + currLink.target.name)
+                  var newTid = currLink.tid
+                  currLinkIndex = this.links.findIndex(link => link.sid === currLink.sid && link.tid === currLink.tid)
+                  this.links.splice(currLinkIndex, 1)
+                  this.links.push({ sid: sourceLink.sid, tid: newTid })
+                })
+                currLinkIndex = this.links.findIndex(link => link.sid === sourceLink.sid && link.tid === sourceLink.tid)
+                this.links.splice(currLinkIndex, 1)
+
+                // 삭제할 노드 배열에 저장
+                deleteNodes.push(node.name)
+              } else {
+                isTaggedNode = true
+              }
+            }
+          })
+
+          // 간선 연결이 안된 노드 삭제
+          deleteNodes.forEach(nodeName => {
+            var idx = this.nodes.findIndex(node => node.name === nodeName)
+            this.nodes.splice(idx, 1)
+          })
+
+          if (!isTaggedNode) {
+            alert('태그 표시된 웹 페이지가 없습니다.')
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
-    // 기능 4: 연관성 높은 노드들을 표현
-    getRelevantNodes () {
-      alert('getRelevantNodes')
+    // 기능 3: 파생 키워드 및 노드 표현
+    getRelevantNodes (node) {
+      // 노드 정보를 서버에 요청 (팀원 이메일이 빈 문자열이면 통합 컬렉션의 데이터를 불러옴)
+      this.$http
+        .get('/data/origin', {
+          params: {
+            name: this.project.project_name,
+            founder: node.founder,
+            currURL: node.currURL
+          }
+        })
+        .then(result => {
+          result.data.forEach(relevantNode => {
+            var nodeIndex = this.nodes.findIndex(currNode => {
+              return currNode.currURL === relevantNode.curr_url && currNode.founder === relevantNode.founder
+            })
+            this.nodes[nodeIndex]._color = 'yellow'
+            if (this.nodes[nodeIndex].level === 1) {
+              this.nodes[nodeIndex]._labelClass = 'derived'
+            }
+          })
+          this.nodes[0]._color = 'yellow'
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
-    // 기능 5: 방문 횟수를 기반으로 다수/소수가 조사한 자료 구별
-    // 통합 컬렉션 내의 방문 비율()을 사용하여 0.7? 이상이면 간선을 파란색으로,
+    // 기능 4: 방문 횟수를 기반으로 다수/소수가 조사한 자료 구별
+    // 통합 컬렉션 내의 방문 비율()을 사용하여 일정 비율 이상이면 간선을 파란색으로,
     // 그 외일 경우 간선을 빨간색으로 표현할 것
     distinguishNodes () {
-      alert('distinguishNodes')
+      if (this.currMember !== '') {
+        alert('사용자 데이터에서는 확인할 수 없습니다.')
+        return
+      }
+
+      this.resetNodes()
+
+      // 노드 정보를 서버에 요청 (팀원 이메일이 빈 문자열이면 통합 컬렉션의 데이터를 불러옴)
+      this.$http
+        .get('/data', {
+          params: {
+            name: this.project.project_name
+          }
+        })
+        .then(result => {
+          this.totalData = result.data
+          if (this.totalData.length > 0) {
+            // 이후의 노드 초기화
+            this.initializeNodes()
+          }
+        }).then(result => {
+          this.nodes.forEach(node => {
+            var linkIndex = this.links.findIndex(link => link.tid === node.id)
+            if (linkIndex !== -1) {
+              if (node.visitRate >= this.visitRateThreshold) {
+                this.links[linkIndex]._color = '#0e01c466'
+              } else {
+                this.links[linkIndex]._color = '#c4010133'
+              }
+            }
+          })
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
-    // 기능 6: 최적 경로 계산 (웹 페이지 방문 비율, 태그 유무만 사용)
+    // 기능 5: 최적 경로 계산 (웹 페이지 방문 비율, 태그 유무만 사용)
     getOptimizedNodes () {
-      alert('getOptimizedNodes')
+      if (this.currMember !== '') {
+        alert('사용자 데이터에서는 확인할 수 없습니다.')
+        return
+      }
+
+      // 노드 정보를 서버에 요청 (팀원 이메일이 빈 문자열이면 통합 컬렉션의 데이터를 불러옴)
+      this.$http
+        .get('/data/recommend', {
+          params: {
+            name: this.project.project_name
+          }
+        })
+        .then(result => {
+          this.nodes.forEach(currNode => {
+            currNode._color = 'WhiteSmoke'
+          })
+
+          result.data.forEach(node => {
+            this.optimizedNodes.push(node)
+          })
+
+          var deleteNodes = []
+
+          for (var i = 1; i < this.nodes.length; i++) {
+            var currNode = this.nodes[i]
+            var optimizedNode = this.optimizedNodes.find(x => x.curr_url === currNode.currURL && x.founder === currNode.founder)
+            if (optimizedNode) {
+              this.nodes[i]._color = 'yellow'
+              continue
+            } else {
+              var targetLinks = this.links.filter(link => link.sid === currNode.id)
+              var sourceLink = this.links.find(link => link.tid === currNode.id)
+              var currLinkIndex
+
+              if (targetLinks) {
+                targetLinks.forEach(currLink => {
+                  console.log(currLink.source.name + ' -X- ' + currLink.target.name)
+                  var newTid = currLink.tid
+                  currLinkIndex = this.links.findIndex(link => link.sid === currLink.sid && link.tid === currLink.tid)
+                  this.links.splice(currLinkIndex, 1)
+                  if (sourceLink) {
+                    this.links.push({ sid: sourceLink.sid, tid: newTid })
+                  }
+                })
+              }
+
+              currLinkIndex = this.links.findIndex(link => link.sid === sourceLink.sid && link.tid === sourceLink.tid)
+              this.links.splice(currLinkIndex, 1)
+
+              deleteNodes.push(this.nodes[i].id)
+            }
+          }
+          
+          // 간선 연결이 안된 노드 삭제
+          deleteNodes.forEach(id => {
+            var deleteNodeIndex = this.nodes.findIndex(x => {
+              return x.id === id
+            })
+            this.nodes.splice(deleteNodeIndex, 1)
+          })
+
+          this.nodes[0]._color = 'yellow'
+          // }
+
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
     // 노드 초기화
     initializeNodes () {
@@ -557,7 +786,7 @@ export default {
           memo: label !== 'etc.' ? data.memo : '',
           visitRate: data.visit_rate ? data.visit_rate : 0,
           relativeKeywordList: data.relativeKeywordList ? data.relativeKeywordList : [],
-          pageContents: data.pageContents ? data.pageContents : []
+          pageContents: []
         })
         console.log(
           'Node created (idx, lv, name): ' +
@@ -581,43 +810,59 @@ export default {
       var prevNode
       var prevNodeURL = data.prev_url
 
+      // 각 노드들과 비교하여 현재 URL이 중복되는 노드가 존재하는지 검사
+      var duplicatedNode = this.nodes.find(node => {
+        return node.currURL === data.curr_url
+        // if (node.founder) {
+        //   return node.currURL === data.curr_url && node.founder === this.decoded.email
+        // } else {
+        //   return node.currURL === data.curr_url
+        // }
+      })
+      // var duplicatedNodes = this.nodes.filter(node => {
+      //   return node.currURL === data.curr_url
+      // })
+      // if (duplicatedNodes) {
+      //   duplicatedNodes.forEach(node => {
+      //     console.log(node.name + ', ' + node.id)
+      //   })
+      // }
+
       // 부모 노드 검색
       // 구글 검색 결과의 URL이 .com으로 끝나거나 .co.kr로 끝나는 경우가 있으므로
       // 해당 URL에서 검색어만 추출하여 일치하는지 검사
       if (prevNodeURL.indexOf('www.' + SEARCH_ENG) !== -1 && prevNodeURL.indexOf('/search?') !== -1) {
-        var parsedQuery = queryParser.parse(prevNodeURL)
+        var parsedQuery = new URL(prevNodeURL).searchParams.get('q')
 
         // 부모 노드의 검색어와 현재 노드의 URL 내 검색 쿼리가 일치하는 노드 찾기
         prevNode = this.nodes.find(node => {
           if (node.paths) {
-            return node.paths[1] === parsedQuery.q
+            return node.paths[1] === parsedQuery
           } else {
             // 레벨 0인 노드는 paths 속성이 존재하지 않으므로 검사에서 패스
             return
           }
         })
       } else {
+        // prevNode = this.nodes.find(node => node.currURL === prevNodeURL)
         // 부모 노드 검색 결과가 여러 개일 경우, 본인이 찾은 노드를 부모 노드로 선정
-        var prevNodes = this.nodes.filter(node => node.currURL === prevNodeURL)
+        // var prevNodes = this.nodes.filter(node => node.currURL === prevNodeURL)
+        var prevNodes = this.nodes.filter(node => {
+          return node.currURL === prevNodeURL
+        })
 
         if (prevNodes.length > 1) {
-          prevNode = prevNodes.find(node => node.founder === this.decoded.email)
+          prevNode = prevNodes.find(node => node.founder === data.user_email)
         } else if (prevNodes.length === 1) {
           prevNode = prevNodes[0]
         }
       }
-
-      // 각 노드들과 비교하여 중복되는 이름의 노드가 존재하는지 검사
-      var duplicatedNode = this.nodes.find(node => {
-        return node.currURL === data.curr_url
-      })
 
       // 중복된 노드가 있는 경우 간선까지 중복되는지 검사
       if (duplicatedNode) {
         var link = this.links.find(x => {
           return x.tid === duplicatedNode.id
         })
-        // if (link.sid === data.parent_id) {
         if (link.sid === prevNode.id) {
           duplicatedLinkTid = link.tid
         }
@@ -640,7 +885,7 @@ export default {
           tagged: data.tagged,
           memo: data.memo,
           visitRate: data.visit_rate ? data.visit_rate : 0,
-          relativeKeywordList: data.relativeKeywordList ? data.relativeKeywordList : [],
+          relativeKeywordList: {},
           pageContents: data.pageContents ? data.pageContents : []
         })
         console.log(
@@ -653,7 +898,6 @@ export default {
         )
 
         // 간선 연결
-        // var sid = data.parent_id
         var sid = prevNode.id
         var tid = this.nodeIndex - 1
         this.links.push({ sid, tid })
@@ -694,11 +938,31 @@ export default {
     // 노드 클릭 시 이벤트
     nodeClick (event, node) {
       if (node.id !== 0) {
-        node.fx = node.x
-        node.fy = node.y
-        this.savePinnedNode(node)
-        // this.pinnedNode = node
-        this.sheet = !this.sheet
+        var isShift
+
+        // 시프트 키가 눌렸는지 판단
+        if (window.event) {
+          // typecast to boolean
+          isShift = !!window.event.shiftKey
+        } else {
+          isShift = !!ev.shiftKey
+        }
+
+        if (isShift) {
+          // 시프트 키를 누르면서 노드를 클릭할 경우
+          // 해당 노드의 파생 키워드 및 경로 표시
+          if (node.id !== 1) {
+            this.getRelevantNodes(node);
+          }
+        } else {
+          // 그냥 노드만 클릭할 경우
+          // 해당 노드의 정보 시트 표시
+          node.fx = node.x
+          node.fy = node.y
+          this.savePinnedNode(node)
+          // this.pinnedNode = node
+          this.sheet = !this.sheet
+        }
       }
     },
     // 간선 클릭 시 이벤트
@@ -726,8 +990,8 @@ export default {
       this.pinnedNode.tagged = node.tagged
       this.pinnedNode.memo = node.memo
       this.pinnedNode.visitRate = node.visitRate
-      this.pinnedNode.relativeKeywordList = node.relativeKeywordList
-      this.pinnedNode.pageContents = node.pageContents
+      this.pinnedNode.relativeKeywordList = Object.keys(node.relativeKeywordList)
+      this.pinnedNode.pageContents = node.level > 1 ? node.pageContents : []
     },
     // updateSheet () {
     //   this.sheet = !this.sheet

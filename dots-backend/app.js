@@ -30,7 +30,7 @@ app.set('view engine', 'pug')
 
 // CORS option
 var corsOptions = {
-	origin: 'http://localhost:8080'
+	origin: app.get('env') === 'production' ? 'https://dots-00.appspot.com' : 'http://localhost:8080'
 	// origin: 'https://dots-00.appspot.com'
 }
 

@@ -1,4 +1,7 @@
 dots/node_modules
 dots-backend/node_modules
-dots-backend/config/jwt.js
 dots-backend/config/database.js
+dots-backend/config/jwt.js
+dots-backend/config/mailConfig.js
+JMH/excels
+JMH/screenshots
