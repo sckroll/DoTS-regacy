@@ -32,24 +32,31 @@ class SentenceTokenizer(object):
 
     def url2sentences(self, url):
         article = Article(url, language='ko')
+        print('>> u1')
         article.download()
+        print('>> u2')
         article.parse()
+        print('>> u3')
         sentences = self.kkma.sentences(article.text)
+        print('>> u4')
 
         for idx in range(0, len(sentences)):
             if len(sentences[idx]) <= 10:
                 sentences[idx - 1] += (' ' + sentences[idx])
                 sentences[idx] = ''
+        print('>> u5')
 
         return sentences
 
     def text2sentences(self, text):
         sentences = self.kkma.sentences(text)
+        print('>> t1')
 
         for idx in range(0, len(sentences)):
             if len(sentences[idx]) <= 10:
                 sentences[idx - 1] += (' ' + sentences[idx])
                 sentences[idx] = ''
+        print('>> t2')
 
         return sentences
 
@@ -111,26 +118,37 @@ class Rank(object):
 class TextRank(object):
     def __init__(self, text):
         self.sent_tokenize = SentenceTokenizer()
+        print('>> 1')
 
         if text[: 5] in ('http:', 'https'):
             self.sentences = self.sent_tokenize.url2sentences(text)
         else:
             self.sentences = self.sent_tokenize.text2sentences(text)
+        print('>> 2')
 
         self.nouns = self.sent_tokenize.get_nouns(self.sentences)
+        print('>> 3')
 
         self.graph_matrix = GraphMatrix()
+        print('>> 4')
         self.sent_graph = self.graph_matrix.build_sent_graph(self.nouns)
+        print('>> 5')
         self.words_graph, self.idx2word = self.graph_matrix.build_words_graph(self.nouns)
+        print('>> 6')
 
         # 문장의 랭킹 체크
         self.rank = Rank()
+        print('>> 7')
         self.sent_rank_idx = self.rank.get_ranks(self.sent_graph)
+        print('>> 8')
         self.sorted_sent_rank_idx = sorted(self.sent_rank_idx, key=lambda k: self.sent_rank_idx[k], reverse=True)
+        print('>> 9')
 
         # 단어의 랭킹 체크
         self.word_rank_idx = self.rank.get_ranks(self.words_graph)
+        print('>> 10')
         self.sorted_word_rank_idx = sorted(self.word_rank_idx, key=lambda k: self.word_rank_idx[k], reverse=True)
+        print('>> 11')
 
     # 본문 요약(기본 3줄)
     def summarize(self, sent_num=3):

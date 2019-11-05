@@ -40,6 +40,9 @@ export default {
     currentMember: ''
   }),
   created () {
+    const extensionId = localStorage.getItem('extensionId')
+    chrome.runtime.sendMessage(extensionId, { currProject: this.project.project_name })
+
     this.$http
       .get('/projects/current', {
         params: {

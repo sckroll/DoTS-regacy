@@ -106,7 +106,8 @@ def main(jsonFile):
     #     project_name = data['project_name']
 
     # 메인 함수에 들어오는 json 객체 열기
-    data = json.loads(jsonFile)
+    # data = json.loads(jsonFile)
+    data = jsonFile
 
     user_name = data['user_name']
     user_email = data['user_email']
@@ -119,9 +120,11 @@ def main(jsonFile):
     project_name = data['project_name']
 
     # 현재 페이지에 대한 크롤링 준비
+    print('--- Driver setting start ---')
     driver = crawl_initiateChromeDriver.initiateChromeDriver()
     driver.get(curr_url)
     driver.implicitly_wait(2)
+    print('--- Driver setting complete ---')
 
     # 검색 페이지인 경우
     if search_page1 in curr_url or search_page2 in curr_url:
@@ -152,14 +155,17 @@ def main(jsonFile):
         relativeKeywordList = []
 
         # 서브 키워드 및 본문 요약은 페이지의 언어에 따라 다르다.
-        if crawl_isEnglishOrKorean.isEnglishOrKorean(driver) == 'ko' or 'ko-KR':
+        print('--- Textrank process start ---')
+        # if crawl_isEnglishOrKorean.isEnglishOrKorean(driver) == 'ko' or 'ko-KR':
+        if crawl_isEnglishOrKorean.isEnglishOrKorean(driver) == 'ko' or crawl_isEnglishOrKorean.isEnglishOrKorean(driver) == 'ko-KR':
             textrank = crawl_parseKoreanContents.TextRank(curr_url)
-            pageContents = textrank.summarize(5)
-            sub_keyword = textrank.keywords()
         else:
             textrank = crawl_parseEnglishContents.TextRank(curr_url)
-            pageContents = textrank.summarize(5)
-            sub_keyword = textrank.keywords()
+        print('--- Textrank process complete ---')
+        print('--- Summarizing start ---')
+        pageContents = textrank.summarize(5)
+        sub_keyword = textrank.keywords()
+        print('--- Summarizing complete ---')
 
         tagged = tagged
         memo = memo
@@ -167,7 +173,9 @@ def main(jsonFile):
         nowTime = datetime.now()
 
     # 추출된 아이템들을 몽고 DB에 저장
+    print('--- Saving data in DB ---')
     crawl_saveMongoDB.store_mongoDB(user_name, user_email, curr_url, prev_url, pageList, relativeKeywordList, level, paths, keyword, sub_keyword, pageContents, memo, tagged, nowTime, project_name)
+    print('--- DB save complete ---')
 
     # # 추출된 아이템들을 엑셀에 저장
     # crawl_saveExcel.make_excel(user_name, keyword)
@@ -175,6 +183,7 @@ def main(jsonFile):
 
     # 드라이버 연결 끊기
     driver.close()
+    # driver.quit()
 
     return 'success'
 

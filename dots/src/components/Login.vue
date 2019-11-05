@@ -34,6 +34,11 @@ export default {
   },
   methods: {
     onSubmit () {
+      if (!localStorage.getItem('extensionId')) {
+        alert('크롬 확장프로그램이 설치되어 있지 않습니다. 설치 후 다시 로그인해주세요.')
+        return
+      }
+
       this.$http
         .post('/users/login', {
           email: this.email,

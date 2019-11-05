@@ -11,7 +11,7 @@
 runtime: custom
 env: flex
 service: dots-crawler
-entrypoint: gunicorn -b :$PORT main:app --timeout 180
+# entrypoint: gunicorn -b :$PORT main:app --timeout 3600
 
 readiness_check:
   app_start_timeout_sec: 1800

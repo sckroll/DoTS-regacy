@@ -37,15 +37,18 @@ def hello():
 	return 'Hello World!'
 
 # Node.js 서버로부터 받은 JSON 객체를 DB에 저장
-@app.route('/crawled-data', methods = ['POST'])
+@app.route('/data', methods = ['POST'])
 def crawledData():
 	payload = request.get_json()
-	json_data = json.dumps(payload)
+	# json_data = json.dumps(payload)
 	
+	print('--- Crawling process start ---')
 	# thread = Threading(json_data)
 	# result = thread.run()
-	result = crawl_main.main(json_data)
-	
+	# result = crawl_main.main(json_data)
+	result = crawl_main.main(payload)
+	print('--- Crawling process complete ---')
+
 	return result
 
 # Function1. 통합 컬렉션 반환 함수
@@ -78,7 +81,7 @@ def origin():
 	return jsonify(node_list=node_list)
 
 # Function6. 추천 경로 반환 (after_data 내 해당하는 오브젝트 ID만 반환))
-@app.route('/recommend', methods = ['GET'])
+@app.route('/recommendation', methods = ['GET'])
 def recommend():
 	project_name = request.args.get('project_name')
 	f6 = Function6.Function6(project_name)
@@ -94,25 +97,29 @@ def recommend():
 	return jsonify(node_list=node_list)
 
 # Function8-1. 사용자 컬렉션 태그/메모 수정
-@app.route('/modifyUser', methods = ['POST'])
+@app.route('/tag-or-memo/user', methods = ['POST'])
 def modifyUser():
-	project_name = request.form['project_name']
-	user_email = request.form['user_email']
-	node_id = request.form['node_id']
-	modified_tag = request.form['modified_tag']
-	modified_memo = request.form['modified_memo']
+	payload = request.get_json()
+
+	project_name = payload['project_name']
+	user_email = payload['user_email']
+	node_id = payload['node_id']
+	modified_tag = payload['modified_tag']
+	modified_memo = payload['modified_memo']
 	f8 = Function8.Function8()
 	f8.update_user_collection(project_name, user_email, node_id, modified_tag, modified_memo)
 
 	return 'success'
 
 # Function8-2. 통합 컬렉션 태그/메모 수정
-@app.route('/modifyAll', methods = ['POST'])
+@app.route('/tag-or-memo/all', methods = ['POST'])
 def modifyAll():
-	project_name = request.form['project_name']
-	node_id = request.form['node_id']
-	modified_tag = request.form['modified_tag']
-	modified_memo = request.form['modified_memo']
+	payload = request.get_json()
+
+	project_name = payload['project_name']
+	node_id = payload['node_id']
+	modified_tag = payload['modified_tag']
+	modified_memo = payload['modified_memo']
 	f8 = Function8.Function8()
 	f8.update_all_user_collection(project_name, node_id, modified_tag, modified_memo)
 

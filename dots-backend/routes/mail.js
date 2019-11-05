@@ -21,6 +21,7 @@ router.post("/invite", function(req, res, next) {
   const verifyKey = firstKey + secondKey
 
   const url = app.get('env') === 'production' ? 'https://dots-00.appspot.com' : 'http://localhost:8080'
+  // const url = 'https://dots-00.appspot.com'
 
   const newMemberProfile = {
     email: newMember.email,

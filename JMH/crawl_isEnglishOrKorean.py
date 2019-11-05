@@ -12,4 +12,5 @@ def isEnglishOrKorean(driver):
     except NoSuchElementException:
         lang = 'en'
 
+    print('Language of current page:', lang)
     return lang

@@ -16,11 +16,11 @@ export default new Vuex.Store({
       localStorage.removeItem('userToken')
       state.token = null
 
-      localStorage.removeItem('prevURL')
-      localStorage.removeItem('currURL')
-      
-      const extensionId = 'jpiagnpijljkijffgaidojpebhmijljc'
-      chrome.runtime.sendMessage(extensionId, { userToken: '' }, response => {
+      // const extensionId =
+      //   process.env.NODE_ENV !== 'production' ? 'jpiagnpijljkijffgaidojpebhmijljc' : 'kbbjkdflgdjckldapfdldgeedcmhmglk'
+      const extensionId = localStorage.getItem('extensionId')
+
+      chrome.runtime.sendMessage(extensionId, { userToken: 'logout' }, response => {
         console.log(response.result)
       })
     }

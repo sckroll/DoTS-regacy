@@ -26,7 +26,11 @@ Vue.use(Router)
 //   process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : '/api'
 const apiRootPath =
   process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : ''
-const extensionId = 'jpiagnpijljkijffgaidojpebhmijljc'
+
+// 크롬 확장프로그램 ID
+// const extensionId =
+//   process.env.NODE_ENV !== 'production' ? 'jpiagnpijljkijffgaidojpebhmijljc' : 'kbbjkdflgdjckldapfdldgeedcmhmglk'
+const extensionId = localStorage.getItem('extensionId')
 
 // 토큰의 유효성을 검사하기 위해 토큰을 헤더에 담아 서버로 전달
 const pageCheck = (to, from, next) => {
@@ -37,10 +41,10 @@ const pageCheck = (to, from, next) => {
       }
     })
     .then(result => {
-      // 모든 인터벌 중지 (임시)
-      for (var i = 0; i < 10; i++) {
-        clearInterval(i)
-      }
+      // // 모든 인터벌 중지 (임시)
+      // for (var i = 0; i < 10; i++) {
+      //   clearInterval(i)
+      // }
 
       // JWT 에러 처리
       if (result.data.message) {
@@ -51,14 +55,14 @@ const pageCheck = (to, from, next) => {
           alert('오류가 발생하였습니다. 다시 로그인해주세요.')
         }
         localStorage.removeItem('userToken')
-        chrome.runtime.sendMessage(extensionId, { userToken: '' }, response => {
+        chrome.runtime.sendMessage(extensionId, { userToken: 'logout' }, response => {
           console.log(response.result)
         })
         next('/')
       }
 
       // 크롬 확장 프로그램에 토큰 전달
-      var token = localStorage.getItem('userToken')
+      const token = localStorage.getItem('userToken')
       chrome.runtime.sendMessage(extensionId, { userToken: token }, response => {
         if (chrome.runtime.lastError) {
           next('/need-extension')
@@ -71,6 +75,7 @@ const pageCheck = (to, from, next) => {
           }
         }
       })
+
       next()
     })
     .catch(err => {

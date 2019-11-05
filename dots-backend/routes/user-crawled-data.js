@@ -75,8 +75,8 @@ router.get('/origin', function(req, res, next) {
 		});
 })
 
-router.get('/recommend', function(req, res, next) {
-	axios.get(serverURL + '/recommend', { params: { project_name: req.query.name } })
+router.get('/recommendation', function(req, res, next) {
+	axios.get(serverURL + '/recommendation', { params: { project_name: req.query.name } })
 		.then(resultObj => {
 			// 여러 개의 오브젝트 ID를 받아 각각 노드를 검색 후 배열로 반환하는 방법
 			Promise.all(
@@ -99,41 +99,35 @@ router.get('/recommend', function(req, res, next) {
 		});
 })
 
-router.post('/tag', function(req, res, next) {
+router.post('/tag-or-memo', function(req, res, next) {
 	console.log(req.body)
 
-	// Data.findOneByUrl(req.body.currURL)
 	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL }, '-screenshot')
 		.then(result => {
 			if (result) {
-				// var newUserData = result
-				// var isTagged
-				// if (newUserData.tagged.indexOf(req.body.email) === -1) {
-				// 	isTagged = true
-				// 	newUserData.tagged.push(req.body.email)
-
-				// 	Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
-				// 		if (err) {
-				// 			res.json({error: '태그 표시 중에 오류가 발생하였습니다.'})
-				// 		} else {
-				// 			res.send(doc)
-				// 		}
-				// 	})
-				// } else {
-				// 	isTagged = false
-				// 	res.json({error: '이미 현재 페이지에 대해 태그를 표시하셨습니다.'})
-				// }
-
-				// 도큐먼트 ID, 태그 여부 전달
-				axios.post(serverURL + '/tag', {
+				console.log('tagged: ' + result.tagged)
+				var modifiedObj = {
 					project_name: req.body.projectName,
-					_id: result._id,
-					tagged: isTagged
-				}).then(response => {
-					res.send(response)
-				}).catch(err => {
-					res.json({ error: '태그 표시 중에 오류가 발생하였습니다.' })
-				});
+					user_email: req.body.email,
+					node_id: result._id,
+					modified_tag: result.tagged.indexOf('False') !== -1 ? 'True' : 'False',
+					modified_memo: req.body.memo ? req.body.memo : result.memo
+				}
+				console.log(modifiedObj)
+
+				axios.post(serverURL + '/tag-or-memo/user', modifiedObj)
+					.then(response => {
+						axios.post(serverURL + '/tag-or-memo/all', modifiedObj)
+							.then(resultData => {
+								res.send(resultData.data)
+							}).catch(err => {
+								console.log(err)
+								res.json({ error: '데이터 처리 중에 오류가 발생하였습니다.' })
+							});
+					}).catch(err => {
+						console.log(err)
+						res.json({ error: '데이터 처리 중에 오류가 발생하였습니다.' })
+					});
 			} else {
 				res.json({ error: '현재 페이지에 대해 크롤링을 수행한 기록이 없습니다. 먼저 DoTS 홈페이지에서 크롤링을 시작해주세요' })
 			}
@@ -143,44 +137,88 @@ router.post('/tag', function(req, res, next) {
 		})
 })
 
-router.post('/memo', function(req, res, next) {
-	console.log(req.body)
+// router.post('/tag', function(req, res, next) {
+// 	console.log(req.body)
 
-	// Data.findOneByUrl(req.body.currURL)
-	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL })
-		.then(result => {
-			if (result) {
-				// var newUserData = result
-				// newUserData.memo = req.body.memo
+// 	// Data.findOneByUrl(req.body.currURL)
+// 	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL }, '-screenshot')
+// 		.then(result => {
+// 			if (result) {
+// 				// var newUserData = result
+// 				// var isTagged
+// 				// if (newUserData.tagged.indexOf(req.body.email) === -1) {
+// 				// 	isTagged = true
+// 				// 	newUserData.tagged.push(req.body.email)
 
-				// Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
-				// 	if (err) {
-				// 		res.json({error: '메모 저장에 오류가 발생하였습니다.'})
-				// 	} else {
-				// 		res.send(doc)
-				// 	}
-				// })
+// 				// 	Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
+// 				// 		if (err) {
+// 				// 			res.json({error: '태그 표시 중에 오류가 발생하였습니다.'})
+// 				// 		} else {
+// 				// 			res.send(doc)
+// 				// 		}
+// 				// 	})
+// 				// } else {
+// 				// 	isTagged = false
+// 				// 	res.json({error: '이미 현재 페이지에 대해 태그를 표시하셨습니다.'})
+// 				// }
 
-				// 도큐먼트 ID, 메모 전달
-				axios.post(serverURL + '/memo', {
-					project_name: req.body.projectName,
-					_id: result._id,
-					memo: req.body.memo
-				}).then(response => {
-					res.send(response)
-				}).catch(err => {
-					res.json({ error: '메모 저장에 오류가 발생하였습니다.' })
-				});
-			} else {
-				res.json({ error: '현재 페이지에 대해 크롤링을 수행한 기록이 없습니다. 먼저 DoTS 홈페이지에서 크롤링을 시작해주세요' })
-			}
-		})
-		.catch(err => {
-			throw err
-		})
-})
+// 				// 도큐먼트 ID, 태그 여부 전달
+// 				axios.put(serverURL + '/tag', {
+// 					project_name: req.body.projectName,
+// 					_id: result._id,
+// 					tagged: "True"
+// 				}).then(response => {
+// 					res.send(response)
+// 				}).catch(err => {
+// 					res.json({ error: '태그 표시 중에 오류가 발생하였습니다.' })
+// 				});
+// 			} else {
+// 				res.json({ error: '현재 페이지에 대해 크롤링을 수행한 기록이 없습니다. 먼저 DoTS 홈페이지에서 크롤링을 시작해주세요' })
+// 			}
+// 		})
+// 		.catch(err => {
+// 			throw err
+// 		})
+// })
 
-router.post('/add', function(req, res, next) {
+// router.post('/memo', function(req, res, next) {
+// 	console.log(req.body)
+
+// 	// Data.findOneByUrl(req.body.currURL)
+// 	Data.findOne({ user_email: req.body.email, curr_url: req.body.currURL })
+// 		.then(result => {
+// 			if (result) {
+// 				// var newUserData = result
+// 				// newUserData.memo = req.body.memo
+
+// 				// Data.findOneAndUpdate({ 'curr_url': req.body.currURL }, newUserData, { new: true }, (err, doc) => {
+// 				// 	if (err) {
+// 				// 		res.json({error: '메모 저장에 오류가 발생하였습니다.'})
+// 				// 	} else {
+// 				// 		res.send(doc)
+// 				// 	}
+// 				// })
+
+// 				// 도큐먼트 ID, 메모 전달
+// 				axios.put(serverURL + '/memo', {
+// 					project_name: req.body.projectName,
+// 					_id: result._id,
+// 					memo: req.body.memo
+// 				}).then(response => {
+// 					res.send(response)
+// 				}).catch(err => {
+// 					res.json({ error: '메모 저장에 오류가 발생하였습니다.' })
+// 				});
+// 			} else {
+// 				res.json({ error: '현재 페이지에 대해 크롤링을 수행한 기록이 없습니다. 먼저 DoTS 홈페이지에서 크롤링을 시작해주세요' })
+// 			}
+// 		})
+// 		.catch(err => {
+// 			throw err
+// 		})
+// })
+
+router.post('/node', function(req, res, next) {
 	var parsedUrl = require('url').parse(req.body.currURL)
 	var hostname = parsedUrl.hostname
 	var paths = [hostname]
@@ -241,7 +279,7 @@ router.post('/add', function(req, res, next) {
 		}
 
 		// // 사용자 DB에 저장하기 위해 Flask 서버로 전달
-		// axios.post(serverURL + '/crawled-data', newUserData)
+		// axios.post(serverURL + '/data', newUserData)
 		// 	.then((result) => {
 		// 		Data = mongoose.model('CrawledData', schema, `${req.body.projectName}_${req.body.userEmail}`)
 		// 		// Data.findAll()
@@ -258,7 +296,7 @@ router.post('/add', function(req, res, next) {
 				if (result) {
 					res.send(result)
 				} else {
-					axios.post(serverURL + '/crawled-data', newUserData)			
+					axios.post(serverURL + '/data', newUserData)			
 						.then(response => {
 							Data.findOne({ user_email: req.body.userEmail, curr_url: req.body.currURL }, '-screenshot')
 								.then((resultData) => {
