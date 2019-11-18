@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
 
 from newspaper import Article
-from konlpy.tag import Kkma
-from konlpy.tag import Okt
+# from konlpy.tag import Kkma
+# from konlpy.tag import Okt
+from konlpy.tag import Mecab
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import normalize
 import numpy as np
 from openpyxl import load_workbook
 import os
+import kss
 
 # Step1. 텍스트 크롤링 > 문장 단위 분리 > 명사 추출
 # stopwords : 불용어로써 문장 내에서 내용을 나타내는데 의미를 가지지 않는 단어들의 집합
 class SentenceTokenizer(object):
     def __init__(self):
-        self.kkma = Kkma()
         # self.kkma = Kkma('C:/Program Files/Java/jre-10.0.2/bin/server/jvm.dll')
-        self.okt = Okt()
+        # self.kkma = Kkma()
+        # self.okt = Okt()
+        self.mecab = Mecab()
 
         # 한국어 불용어 엑셀 파일을 로드
         self.load_wb = load_workbook(os.path.abspath('workbook/korean_stopwords.xlsx'))
@@ -32,31 +35,26 @@ class SentenceTokenizer(object):
 
     def url2sentences(self, url):
         article = Article(url, language='ko')
-        print('>> u1')
         article.download()
-        print('>> u2')
         article.parse()
-        print('>> u3')
-        sentences = self.kkma.sentences(article.text)
-        print('>> u4')
+        # sentences = self.kkma.sentences(article.text)
+        sentences = kss.split_sentences(article.text)
 
         for idx in range(0, len(sentences)):
             if len(sentences[idx]) <= 10:
                 sentences[idx - 1] += (' ' + sentences[idx])
                 sentences[idx] = ''
-        print('>> u5')
 
         return sentences
 
     def text2sentences(self, text):
-        sentences = self.kkma.sentences(text)
-        print('>> t1')
+        # sentences = self.kkma.sentences(text)
+        sentences = kss.split_sentences(text)
 
         for idx in range(0, len(sentences)):
             if len(sentences[idx]) <= 10:
                 sentences[idx - 1] += (' ' + sentences[idx])
                 sentences[idx] = ''
-        print('>> t2')
 
         return sentences
 
@@ -66,7 +64,9 @@ class SentenceTokenizer(object):
         for sentence in sentences:
             if sentence is not '':
                 nouns.append(' '.join([
-                    noun for noun in self.okt.nouns(str(sentence))
+                    # noun for noun in self.okt.nouns(str(sentence))
+                    # if noun not in self.stopwords and len(noun) > 1]
+                    noun for noun in self.mecab.nouns(str(sentence))
                     if noun not in self.stopwords and len(noun) > 1]
                 ))
 
@@ -118,38 +118,39 @@ class Rank(object):
 class TextRank(object):
     def __init__(self, text):
         self.sent_tokenize = SentenceTokenizer()
-        print('>> 1')
 
         if text[: 5] in ('http:', 'https'):
             self.sentences = self.sent_tokenize.url2sentences(text)
         else:
             self.sentences = self.sent_tokenize.text2sentences(text)
-        print('>> 2')
 
         self.nouns = self.sent_tokenize.get_nouns(self.sentences)
-        print('>> 3')
+
+
+        # self.nouns = []
+
+        # if text[: 5] in ('http:', 'https'):
+        #     article = Article(text, language='ko')
+        #     article.download()
+        #     article.parse()
+        #     self.nouns = self.sent_tokenize.mecab.nouns(article.text)
+        # else:
+        #     self.nouns = self.sent_tokenize.mecab.nouns(text)
+
 
         self.graph_matrix = GraphMatrix()
-        print('>> 4')
         self.sent_graph = self.graph_matrix.build_sent_graph(self.nouns)
-        print('>> 5')
         self.words_graph, self.idx2word = self.graph_matrix.build_words_graph(self.nouns)
-        print('>> 6')
 
         # 문장의 랭킹 체크
         self.rank = Rank()
-        print('>> 7')
         self.sent_rank_idx = self.rank.get_ranks(self.sent_graph)
-        print('>> 8')
         self.sorted_sent_rank_idx = sorted(self.sent_rank_idx, key=lambda k: self.sent_rank_idx[k], reverse=True)
-        print('>> 9')
 
         # 단어의 랭킹 체크
         self.word_rank_idx = self.rank.get_ranks(self.words_graph)
-        print('>> 10')
         self.sorted_word_rank_idx = sorted(self.word_rank_idx, key=lambda k: self.word_rank_idx[k], reverse=True)
-        print('>> 11')
-
+        
     # 본문 요약(기본 3줄)
     def summarize(self, sent_num=3):
         summary = []

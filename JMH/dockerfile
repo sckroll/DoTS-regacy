@@ -24,10 +24,17 @@ RUN virtualenv --no-download /env -p python3.7
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 ADD requirements.txt /app/
+RUN pip3 install Cython
 RUN pip install -r requirements.txt
+
+# Mecab-ko install
+RUN ["/bin/bash", "-c", "bash < <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh)"]
+# RUN python /tmp/mecab-python-0.996/setup.py build
+# RUN python /tmp/mecab-python-0.996/setup.py install
 
 # Nltk download
 RUN python -m nltk.downloader punkt
+RUN python -m nltk.downloader averaged_perceptron_tagger
 
 # Avoid JPype UserWarning
 RUN pip uninstall -y JPype1

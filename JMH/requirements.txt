@@ -12,3 +12,4 @@ pandas==0.24.2
 konlpy==0.5.1
 dnspython==1.16.0
 eventlet==0.25.1
+kss==1.2.5
