@@ -19,11 +19,8 @@ def initiateChromeDriver():
     )
 
     print('--- Chromedriver loading ---')
-    # driver = webdriver.Chrome('C:\chromedriver_win32\chromedriver.exe', chrome_options=chrome_options)
-    # driver = webdriver.Chrome(os.path.abspath('chromedriver/chromedriver.exe'), chrome_options=chrome_options)
-    driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', chrome_options=chrome_options)
-    # driver = webdriver.Chrome(chrome_options=chrome_options)
-    # driver = webdriver.Chrome('/home/vmagent/app/chromedriver/chromedriver', chrome_options=chrome_options)
+    driver = webdriver.Chrome('C:\chromedriver_win32\chromedriver.exe', chrome_options=chrome_options)
+    # driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', chrome_options=chrome_options)
     print('--- Chromedriver loaded ---')
 
     return driver

@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
 
 from newspaper import Article
-# from konlpy.tag import Kkma
-# from konlpy.tag import Okt
-from konlpy.tag import Mecab
+from konlpy.tag import Kkma
+from konlpy.tag import Okt
+# from konlpy.tag import Mecab
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import normalize
 import numpy as np
 from openpyxl import load_workbook
 import os
-import kss
+# import kss
 
 # Step1. 텍스트 크롤링 > 문장 단위 분리 > 명사 추출
 # stopwords : 불용어로써 문장 내에서 내용을 나타내는데 의미를 가지지 않는 단어들의 집합
 class SentenceTokenizer(object):
     def __init__(self):
-        # self.kkma = Kkma('C:/Program Files/Java/jre-10.0.2/bin/server/jvm.dll')
+        self.kkma = Kkma('C:/Program Files/Java/jre-10.0.2/bin/server/jvm.dll')
         # self.kkma = Kkma()
-        # self.okt = Okt()
-        self.mecab = Mecab()
+        self.okt = Okt()
+
+        # self.mecab = Mecab()
 
         # 한국어 불용어 엑셀 파일을 로드
         self.load_wb = load_workbook(os.path.abspath('workbook/korean_stopwords.xlsx'))
@@ -37,8 +38,8 @@ class SentenceTokenizer(object):
         article = Article(url, language='ko')
         article.download()
         article.parse()
-        # sentences = self.kkma.sentences(article.text)
-        sentences = kss.split_sentences(article.text)
+        sentences = self.kkma.sentences(article.text)
+        # sentences = kss.split_sentences(article.text)
 
         for idx in range(0, len(sentences)):
             if len(sentences[idx]) <= 10:
@@ -48,8 +49,8 @@ class SentenceTokenizer(object):
         return sentences
 
     def text2sentences(self, text):
-        # sentences = self.kkma.sentences(text)
-        sentences = kss.split_sentences(text)
+        sentences = self.kkma.sentences(text)
+        # sentences = kss.split_sentences(text)
 
         for idx in range(0, len(sentences)):
             if len(sentences[idx]) <= 10:
@@ -64,10 +65,10 @@ class SentenceTokenizer(object):
         for sentence in sentences:
             if sentence is not '':
                 nouns.append(' '.join([
-                    # noun for noun in self.okt.nouns(str(sentence))
-                    # if noun not in self.stopwords and len(noun) > 1]
-                    noun for noun in self.mecab.nouns(str(sentence))
+                    noun for noun in self.okt.nouns(str(sentence))
                     if noun not in self.stopwords and len(noun) > 1]
+                    # noun for noun in self.mecab.nouns(str(sentence))
+                    # if noun not in self.stopwords and len(noun) > 1]
                 ))
 
         return nouns

@@ -20,7 +20,7 @@ router.post("/invite", function(req, res, next) {
   const secondKey = crypto.randomBytes(256).toString('hex').substr(200, 16)
   const verifyKey = firstKey + secondKey
 
-  const url = app.get('env') === 'production' ? 'https://dots-00.appspot.com' : 'http://localhost:8080'
+  const url = process.env.NODE_ENV === 'production' ? 'https://dots-00.appspot.com' : 'http://localhost:8080'
   // const url = 'https://dots-00.appspot.com'
 
   const newMemberProfile = {
